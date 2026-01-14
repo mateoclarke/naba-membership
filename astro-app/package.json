@@ -3,11 +3,12 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "prebuild": "python3 -m pip install --user -r ../scripts/requirements.txt",
     "dev": "npm run export-data && astro dev",
     "build": "npm run export-data && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "export-data": "python3 ../scripts/export_member_data.py \"../data/NaBA Members.csv\""
+    "export-data": "python3 ../scripts/export_member_data.py \"../data/NaBA Members.csv\" || true"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",

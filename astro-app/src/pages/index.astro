@@ -1,21 +1,52 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Map from '../components/Map';
-import memberCountsData from '../../public/data/memberCounts.json';
-import statsDataRaw from '../../public/data/stats.json';
-import stateMappingData from '../../public/data/stateMapping.json';
-
-// TypeScript/JSON imports work at build time
-const memberCounts = memberCountsData as Record<string, number>;
-const statsData = statsDataRaw as { total: number; states: Record<string, number>; canada: number; international: number };
-const stateMapping = stateMappingData as Record<string, string>;
 ---
 
-<Layout title="Active Members by State - Choropleth Map">
-	<Map 
-		client:load
-		memberCounts={memberCounts}
-		statsData={statsData}
-		stateMapping={stateMapping}
-	/>
+<Layout title="Natural Building Alliance">
+  <main style="max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem;">
+    <section style="text-align: center; margin-bottom: 2rem;">
+      <img
+        src="/naba-logo.png"
+        alt="Natural Building Alliance"
+        style="max-width: 320px; width: 100%; height: auto; margin-bottom: 1.5rem;"
+      />
+      <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">
+        Natural Building Alliance
+      </h1>
+      <p style="max-width: 640px; margin: 0 auto; color: #555;">
+        Connecting people, organizations, and businesses in the natural building
+        community through education, collaboration, and shared resources.
+      </p>
+    </section>
+
+    <section style="display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      <a href="/directory?view=members" style="text-decoration: none; color: inherit;">
+        <div style="border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #ddd; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+          <h2 style="margin-top: 0; margin-bottom: 0.5rem;">Membership Directory</h2>
+          <p style="margin: 0; color: #555;">
+            Explore individual members and non-profit or educational organizations
+            participating in natural building.
+          </p>
+        </div>
+      </a>
+
+      <a href="/directory?view=businesses" style="text-decoration: none; color: inherit;">
+        <div style="border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #ddd; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+          <h2 style="margin-top: 0; margin-bottom: 0.5rem;">Business Directory</h2>
+          <p style="margin: 0; color: #555;">
+            Find natural building businesses, designers, and contractors.
+          </p>
+        </div>
+      </a>
+
+      <a href="/map" style="text-decoration: none; color: inherit;">
+        <div style="border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #ddd; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+          <h2 style="margin-top: 0; margin-bottom: 0.5rem;">Member Map</h2>
+          <p style="margin: 0; color: #555;">
+            View an interactive map of active NaBA members by state.
+          </p>
+        </div>
+      </a>
+    </section>
+  </main>
 </Layout>

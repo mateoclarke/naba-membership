@@ -1,224 +1,361 @@
-import { useEffect, useRef } from 'react';
-import type L from 'leaflet';
+import { useEffect, useRef } from "react";
+import type L from "leaflet";
 
 interface MapProps {
-	memberCounts: Record<string, number>;
-	statsData: {
-		total: number;
-		states: Record<string, number>;
-		canada: number;
-		international: number;
-	};
-	stateMapping: Record<string, string>;
+  memberCounts: Record<string, number>;
+  statsData: {
+    total: number;
+    states: Record<string, number>;
+    canada: number;
+    international: number;
+  };
+  stateMapping: Record<string, string>;
 }
 
-export default function Map({ memberCounts, statsData, stateMapping }: MapProps) {
-	const mapRef = useRef<L.Map | null>(null);
-	const mapContainerRef = useRef<HTMLDivElement>(null);
-	const geojsonRef = useRef<L.GeoJSON | null>(null);
+export default function Map({
+  memberCounts,
+  statsData,
+  stateMapping,
+}: MapProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const geojsonRef = useRef<L.GeoJSON | null>(null);
 
-	useEffect(() => {
-		if (!mapContainerRef.current || mapRef.current) return;
+  useEffect(() => {
+    console.log("[Map] useEffect triggered");
+    console.log("[Map] mapContainerRef.current:", mapContainerRef.current);
+    console.log("[Map] mapRef.current:", mapRef.current);
+    console.log(
+      "[Map] window.L available:",
+      typeof (window as any).L !== "undefined"
+    );
 
-		// Initialize map
-		const map = (window as any).L.map(mapContainerRef.current).setView([39.8283, -98.5795], 4);
-		mapRef.current = map;
+    if (!mapContainerRef.current) {
+      console.error(
+        "[Map] mapContainerRef.current is null - container not mounted"
+      );
+      return;
+    }
 
-		// Add tile layer
-		(window as any).L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			maxZoom: 19,
-			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-		}).addTo(map);
+    if (mapRef.current) {
+      console.warn("[Map] Map already initialized, skipping");
+      return;
+    }
 
-		// Helper function to get state code from feature
-		function getStateCode(feature: any): string | null {
-			if (feature.properties.STUSPS) return feature.properties.STUSPS;
-			if (feature.properties.STATE) return feature.properties.STATE;
-			if (feature.properties.state) return feature.properties.state.toUpperCase();
-			if (feature.properties.name) {
-				const code = stateMapping[feature.properties.name];
-				if (code) return code;
-			}
-			return null;
-		}
+    // Wait for Leaflet to be available
+    let retryCount = 0;
+    const maxRetries = 50; // 5 seconds max wait
 
-		// Color function based on member count
-		function getColor(count: number): string {
-			if (!count || count === 0) return '#f7f7f7';
-			return count > 25 ? '#800026' :
-				count > 15 ? '#BD0026' :
-				count > 10 ? '#E31A1C' :
-				count > 5 ? '#FC4E2A' :
-				count > 2 ? '#FD8D3C' :
-				count > 0 ? '#FED976' :
-				'#f7f7f7';
-		}
+    const initMap = () => {
+      console.log(
+        `[Map] initMap attempt ${retryCount + 1}, checking for Leaflet...`
+      );
 
-		// Style function for GeoJSON features
-		function style(feature: any) {
-			const stateCode = getStateCode(feature);
-			const count = stateCode ? (memberCounts[stateCode] || 0) : 0;
+      if (typeof (window as any).L === "undefined") {
+        retryCount++;
+        if (retryCount > maxRetries) {
+          console.error("[Map] Leaflet failed to load after maximum retries");
+          return;
+        }
+        console.warn(
+          `[Map] Leaflet not loaded yet, retrying... (${retryCount}/${maxRetries})`
+        );
+        setTimeout(initMap, 100);
+        return;
+      }
 
-			return {
-				fillColor: getColor(count),
-				weight: 2,
-				opacity: 1,
-				color: 'white',
-				dashArray: '3',
-				fillOpacity: 0.7
-			};
-		}
+      console.log("[Map] Leaflet found! Initializing map...");
+      console.log("[Map] Container element:", mapContainerRef.current);
 
-		// Create info control
-		const info = (window as any).L.control();
-		info.onAdd = function (map: L.Map) {
-			const div = (window as any).L.DomUtil.create('div', 'info');
-			div.innerHTML = '<h4>Active Members by State</h4>Hover over a state';
-			return div;
-		};
-		info.update = function (props?: { name: string; count: number }) {
-			if (props) {
-				this._div.innerHTML = '<h4>Active Members by State</h4>' +
-					'<b>' + props.name + '</b><br />' + props.count + ' active member' + (props.count !== 1 ? 's' : '');
-			} else {
-				this._div.innerHTML = '<h4>Active Members by State</h4>Hover over a state';
-			}
-		};
-		info.addTo(map);
+      // Initialize map
+      let map: L.Map;
+      try {
+        console.log("[Map] Creating Leaflet map instance...");
+        map = (window as any).L.map(mapContainerRef.current).setView(
+          [39.8283, -98.5795],
+          4
+        );
+        mapRef.current = map;
+        console.log("[Map] Map instance created successfully:", map);
 
-		// Create legend control
-		const legend = (window as any).L.control({ position: 'bottomright' });
-		legend.onAdd = function (map: L.Map) {
-			const div = (window as any).L.DomUtil.create('div', 'info legend');
-			const grades = [0, 1, 3, 6, 11, 16, 26];
-			for (let i = 0; i < grades.length; i++) {
-				div.innerHTML +=
-					'<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-					grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
-			}
-			return div;
-		};
-		legend.addTo(map);
+        // Add tile layer
+        console.log("[Map] Adding tile layer...");
+        (window as any).L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            maxZoom: 19,
+            attribution:
+              '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          }
+        ).addTo(map);
+        console.log("[Map] Tile layer added");
+      } catch (error) {
+        console.error("[Map] Error initializing map:", error);
+        return;
+      }
 
-		// Create statistics panel control
-		const stats = (window as any).L.control({ position: 'topleft' });
-		stats.onAdd = function (map: L.Map) {
-			const div = (window as any).L.DomUtil.create('div', 'stats');
+      // Helper function to get state code from feature
+      function getStateCode(feature: any): string | null {
+        if (feature.properties.STUSPS) return feature.properties.STUSPS;
+        if (feature.properties.STATE) return feature.properties.STATE;
+        if (feature.properties.state)
+          return feature.properties.state.toUpperCase();
+        if (feature.properties.name) {
+          const code = stateMapping[feature.properties.name];
+          if (code) return code;
+        }
+        return null;
+      }
 
-			let html = '<h4>Active Members</h4>';
-			html += '<div class="total">Total: ' + statsData.total + '</div>';
+      // Color function based on member count
+      function getColor(count: number): string {
+        if (!count || count === 0) return "#f7f7f7";
+        return count > 25
+          ? "#800026"
+          : count > 15
+          ? "#BD0026"
+          : count > 10
+          ? "#E31A1C"
+          : count > 5
+          ? "#FC4E2A"
+          : count > 2
+          ? "#FD8D3C"
+          : count > 0
+          ? "#FED976"
+          : "#f7f7f7";
+      }
 
-			// US States section - sorted by count (descending)
-			html += '<div class="section">';
-			html += '<div class="section-title">US States:</div>';
-			const states = statsData.states;
-			const stateEntries = Object.keys(states).map(stateCode => [stateCode, states[stateCode]]);
-			stateEntries.sort((a, b) => (b[1] as number) - (a[1] as number));
+      // Style function for GeoJSON features
+      function style(feature: any) {
+        const stateCode = getStateCode(feature);
+        const count = stateCode ? memberCounts[stateCode] || 0 : 0;
 
-			for (let i = 0; i < stateEntries.length; i++) {
-				const stateCode = stateEntries[i][0];
-				const count = stateEntries[i][1];
-				html += '<div class="state-item">';
-				html += '<span class="state-code">' + stateCode + ':</span> ';
-				html += '<span class="state-count">' + count + '</span>';
-				html += '</div>';
-			}
-			html += '</div>';
+        return {
+          fillColor: getColor(count),
+          weight: 2,
+          opacity: 1,
+          color: "white",
+          dashArray: "3",
+          fillOpacity: 0.7,
+        };
+      }
 
-			// Canada section
-			if (statsData.canada > 0) {
-				html += '<div class="section">';
-				html += '<div class="state-item">';
-				html += '<span class="state-code">Canada:</span> ';
-				html += '<span class="state-count">' + statsData.canada + '</span>';
-				html += '</div>';
-			}
+      // Create info control
+      const info = (window as any).L.control();
+      let infoDiv: HTMLElement | null = null;
 
-			// International section
-			if (statsData.international > 0) {
-				html += '<div class="section">';
-				html += '<div class="state-item">';
-				html += '<span class="state-code">International:</span> ';
-				html += '<span class="state-count">' + statsData.international + '</span>';
-				html += '</div>';
-			}
+      info.onAdd = function (this: any, map: L.Map) {
+        infoDiv = (window as any).L.DomUtil.create("div", "info");
+        this._div = infoDiv;
+        updateInfo();
+        return infoDiv;
+      };
 
-			div.innerHTML = html;
+      const updateInfo = (props?: { name: string; count: number }) => {
+        if (!infoDiv) {
+          console.warn("[Map] infoDiv is not set");
+          return;
+        }
+        if (props) {
+          infoDiv.innerHTML =
+            "<h4>Active Members by State</h4>" +
+            "<b>" +
+            props.name +
+            "</b><br />" +
+            props.count +
+            " active member" +
+            (props.count !== 1 ? "s" : "");
+        } else {
+          infoDiv.innerHTML =
+            "<h4>Active Members by State</h4>Hover over a state";
+        }
+      };
 
-			// Prevent scroll events in stats panel from zooming the map
-			(window as any).L.DomEvent.disableScrollPropagation(div);
-			(window as any).L.DomEvent.on(div, 'mousewheel', (window as any).L.DomEvent.stopPropagation);
-			(window as any).L.DomEvent.on(div, 'DOMMouseScroll', (window as any).L.DomEvent.stopPropagation);
+      info.update = updateInfo;
+      info.addTo(map);
 
-			return div;
-		};
-		stats.addTo(map);
+      // Create legend control
+      const legend = (window as any).L.control({ position: "bottomright" });
+      legend.onAdd = function (map: L.Map) {
+        const div = (window as any).L.DomUtil.create("div", "info legend");
+        const grades = [0, 1, 3, 6, 11, 16, 26];
+        for (let i = 0; i < grades.length; i++) {
+          div.innerHTML +=
+            '<i style="background:' +
+            getColor(grades[i] + 1) +
+            '"></i> ' +
+            grades[i] +
+            (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
+        }
+        return div;
+      };
+      legend.addTo(map);
 
-		// Event handlers
-		function highlightFeature(e: L.LeafletMouseEvent) {
-			const layer = e.target;
-			layer.setStyle({
-				weight: 5,
-				color: '#666',
-				dashArray: '',
-				fillOpacity: 0.7
-			});
+      // Create statistics panel control
+      const stats = (window as any).L.control({ position: "topleft" });
+      stats.onAdd = function (map: L.Map) {
+        const div = (window as any).L.DomUtil.create("div", "stats");
 
-			if (!(window as any).L.Browser.ie && !(window as any).L.Browser.opera && !(window as any).L.Browser.edge) {
-				layer.bringToFront();
-			}
+        let html = "<h4>Active Members</h4>";
+        html += '<div class="total">Total: ' + statsData.total + "</div>";
 
-			const stateCode = getStateCode(layer.feature);
-			const stateName = layer.feature.properties.NAME || layer.feature.properties.name || stateCode || 'Unknown';
-			const count = stateCode ? (memberCounts[stateCode] || 0) : 0;
+        // US States section - sorted by count (descending)
+        html += '<div class="section">';
+        html += '<div class="section-title">US States:</div>';
+        const states = statsData.states;
+        const stateEntries = Object.keys(states).map((stateCode) => [
+          stateCode,
+          states[stateCode],
+        ]);
+        stateEntries.sort((a, b) => (b[1] as number) - (a[1] as number));
 
-			info.update({
-				name: stateName,
-				count: count
-			});
-		}
+        for (let i = 0; i < stateEntries.length; i++) {
+          const stateCode = stateEntries[i][0];
+          const count = stateEntries[i][1];
+          html += '<div class="state-item">';
+          html += '<span class="state-code">' + stateCode + ":</span> ";
+          html += '<span class="state-count">' + count + "</span>";
+          html += "</div>";
+        }
+        html += "</div>";
 
-		function resetHighlight(e: L.LeafletMouseEvent) {
-			if (geojsonRef.current) {
-				geojsonRef.current.resetStyle(e.target);
-			}
-			info.update();
-		}
+        // Canada section
+        if (statsData.canada > 0) {
+          html += '<div class="section">';
+          html += '<div class="state-item">';
+          html += '<span class="state-code">Canada:</span> ';
+          html += '<span class="state-count">' + statsData.canada + "</span>";
+          html += "</div>";
+        }
 
-		function zoomToFeature(e: L.LeafletMouseEvent) {
-			map.fitBounds(e.target.getBounds());
-		}
+        // International section
+        if (statsData.international > 0) {
+          html += '<div class="section">';
+          html += '<div class="state-item">';
+          html += '<span class="state-code">International:</span> ';
+          html +=
+            '<span class="state-count">' + statsData.international + "</span>";
+          html += "</div>";
+        }
 
-		function onEachFeature(feature: any, layer: L.Layer) {
-			layer.on({
-				mouseover: highlightFeature,
-				mouseout: resetHighlight,
-				click: zoomToFeature
-			});
-		}
+        div.innerHTML = html;
 
-		// Load US states GeoJSON
-		fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
-			.then(response => response.json())
-			.then(data => {
-				const geojson = (window as any).L.geoJson(data, {
-					style: style,
-					onEachFeature: onEachFeature
-				}).addTo(map);
-				geojsonRef.current = geojson;
-			})
-			.catch(error => {
-				console.error('Error loading GeoJSON:', error);
-				alert('Failed to load map data. Please check your internet connection.');
-			});
+        // Prevent scroll events in stats panel from zooming the map
+        (window as any).L.DomEvent.disableScrollPropagation(div);
+        (window as any).L.DomEvent.on(
+          div,
+          "mousewheel",
+          (window as any).L.DomEvent.stopPropagation
+        );
+        (window as any).L.DomEvent.on(
+          div,
+          "DOMMouseScroll",
+          (window as any).L.DomEvent.stopPropagation
+        );
 
-		return () => {
-			if (mapRef.current) {
-				mapRef.current.remove();
-				mapRef.current = null;
-			}
-		};
-	}, [memberCounts, statsData, stateMapping]);
+        return div;
+      };
+      stats.addTo(map);
 
-	return <div id="map" ref={mapContainerRef}></div>;
+      // Event handlers
+      function highlightFeature(e: L.LeafletMouseEvent) {
+        const layer = e.target;
+        layer.setStyle({
+          weight: 5,
+          color: "#666",
+          dashArray: "",
+          fillOpacity: 0.7,
+        });
+
+        if (
+          !(window as any).L.Browser.ie &&
+          !(window as any).L.Browser.opera &&
+          !(window as any).L.Browser.edge
+        ) {
+          layer.bringToFront();
+        }
+
+        const stateCode = getStateCode(layer.feature);
+        const stateName =
+          layer.feature.properties.NAME ||
+          layer.feature.properties.name ||
+          stateCode ||
+          "Unknown";
+        const count = stateCode ? memberCounts[stateCode] || 0 : 0;
+
+        updateInfo({
+          name: stateName,
+          count: count,
+        });
+      }
+
+      function resetHighlight(e: L.LeafletMouseEvent) {
+        if (geojsonRef.current) {
+          geojsonRef.current.resetStyle(e.target);
+        }
+        updateInfo();
+      }
+
+      function zoomToFeature(e: L.LeafletMouseEvent) {
+        map.fitBounds(e.target.getBounds());
+      }
+
+      function onEachFeature(feature: any, layer: L.Layer) {
+        layer.on({
+          mouseover: highlightFeature,
+          mouseout: resetHighlight,
+          click: zoomToFeature,
+        });
+      }
+
+      // Load US states GeoJSON
+      console.log("[Map] Fetching GeoJSON data...");
+      fetch(
+        "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
+      )
+        .then((response) => {
+          console.log("[Map] GeoJSON response status:", response.status);
+          return response.json();
+        })
+        .then((data) => {
+          console.log(
+            "[Map] GeoJSON data loaded, features:",
+            data.features?.length
+          );
+          const geojson = (window as any).L.geoJson(data, {
+            style: style,
+            onEachFeature: onEachFeature,
+          }).addTo(map);
+          geojsonRef.current = geojson;
+          console.log("[Map] GeoJSON layer added to map");
+        })
+        .catch((error) => {
+          console.error("[Map] Error loading GeoJSON:", error);
+          alert(
+            "Failed to load map data. Please check your internet connection."
+          );
+        });
+    };
+
+    // Start initialization
+    console.log("[Map] Starting map initialization...");
+    initMap();
+
+    return () => {
+      console.log("[Map] Cleanup: removing map");
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [memberCounts, statsData, stateMapping]);
+
+  console.log("[Map] Component rendering, returning div");
+  return (
+    <div
+      id="map"
+      ref={mapContainerRef}
+      style={{ width: "100%", height: "100vh" }}
+    ></div>
+  );
 }
