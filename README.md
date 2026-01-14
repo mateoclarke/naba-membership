@@ -104,18 +104,15 @@ python3 scripts/filter_active_members.py "NaBA Members.csv" "Jan 2026 NaBA Activ
 2. Build site: `cd astro-app && npm run build`
 3. Deploy `astro-app/dist/` to Netlify (via drag-and-drop, Git, or CLI)
 
-**Legacy (Standalone HTML):**
-
-1. Generate HTML: `python3 scripts/generate_leaflet_map.py "NaBA Members.csv"`
-2. Deploy `NaBA Member Data Viz/` folder to Netlify
-
 ## Next Steps
 
 - [x] Protect membership data by including CSV files in `.gitignore` ✅
 - [x] Organize repository structure (scripts in `scripts/`, archive old files) ✅
 - [x] Separate HTML, JS, and CSS into individual files ✅
 - [x] Upgrade to Astro static site generator ✅
-- [ ] Publish code open source to GitHub
-- [ ] Publish to a proper subdomain (e.g., `members.naturalbuildingalliance.org`)
-- [ ] Add more pages (about, methodology, etc.)
+- [x] Publish code open source to GitHub
+- [x] Publish to a proper subdomain (e.g., `members.natbuild.org`)
+- [x] Add more pages for directory
+- [ ] Set up Wordpress instance from data export as sandbox
+- [ ] Configure headless WP API to feed directory data to Astro
 - [ ] Integrate WordPress authentication for member directory editing
