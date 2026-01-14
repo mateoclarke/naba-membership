@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "prebuild": "python3 -m pip install --user -r ../scripts/requirements.txt",
     "dev": "npm run export-data && astro dev",
     "build": "npm run export-data && astro build",
     "preview": "astro preview",
