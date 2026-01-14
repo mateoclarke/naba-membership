@@ -11,6 +11,7 @@ ENV/
 
 # CSV data files - protect membership data
 *.csv
+data/*.csv
 !archive/*.csv
 
 # IDE
@@ -26,3 +27,13 @@ Thumbs.db
 
 # Netlify
 .netlify/
+
+# Node.js / Astro
+node_modules/
+astro-app/node_modules/
+astro-app/dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
