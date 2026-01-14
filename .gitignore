@@ -14,6 +14,9 @@ ENV/
 data/*.csv
 !archive/*.csv
 
+# Allow JSON data files (generated from CSV, safe to commit)
+!astro-app/public/data/*.json
+
 # IDE
 .vscode/
 .idea/
