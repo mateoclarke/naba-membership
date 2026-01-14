@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Map from '../components/Map';
+import memberCountsData from '../../public/data/memberCounts.json';
+import statsDataRaw from '../../public/data/stats.json';
+import stateMappingData from '../../public/data/stateMapping.json';
+
+// TypeScript/JSON imports work at build time
+const memberCounts = memberCountsData as Record<string, number>;
+const statsData = statsDataRaw as { total: number; states: Record<string, number>; canada: number; international: number };
+const stateMapping = stateMappingData as Record<string, string>;
+---
+
+<Layout title="Active Members by State - Choropleth Map">
+	<Map 
+		client:load
+		memberCounts={memberCounts}
+		statsData={statsData}
+		stateMapping={stateMapping}
+	/>
+</Layout>
