@@ -1,0 +1,75 @@
+[
+  {
+    "id": 1,
+    "name": "Earthbound Builders Cooperative",
+    "type": "business",
+    "role": "Design–Build Cooperative",
+    "location": "Bozeman, MT",
+    "website": "https://example.com/earthbound",
+    "tags": ["straw bale", "timber framing", "natural plasters"]
+  },
+  {
+    "id": 2,
+    "name": "High Plains Hemp Construction",
+    "type": "business",
+    "role": "Hempcrete Contractor",
+    "location": "Fort Collins, CO",
+    "website": "https://example.com/high-plains-hemp",
+    "tags": ["hempcrete", "retrofit", "consulting"]
+  },
+  {
+    "id": 3,
+    "name": "Wild Clay Studio",
+    "type": "business",
+    "role": "Natural Plaster & Finish Studio",
+    "location": "Portland, OR",
+    "website": "https://example.com/wild-clay",
+    "tags": ["clay plasters", "pigments", "training"]
+  },
+  {
+    "id": 4,
+    "name": "Mountain Strawbale Institute",
+    "type": "organization",
+    "role": "Educational Non-Profit",
+    "location": "Missoula, MT",
+    "website": "https://example.com/mountain-strawbale",
+    "tags": ["education", "workshops", "research"]
+  },
+  {
+    "id": 5,
+    "name": "Natural Building Lab – University Program",
+    "type": "organization",
+    "role": "University Lab",
+    "location": "Boulder, CO",
+    "website": "https://example.com/natural-building-lab",
+    "tags": ["university", "student projects", "research"]
+  },
+  {
+    "id": 6,
+    "name": "Alex Rivera",
+    "type": "individual",
+    "role": "Natural Builder & Instructor",
+    "location": "Taos, NM",
+    "website": "https://example.com/alex-rivera",
+    "tags": ["cob", "straw bale", "workshops"]
+  },
+  {
+    "id": 7,
+    "name": "Priya Shah",
+    "type": "individual",
+    "role": "Architect",
+    "location": "Berkeley, CA",
+    "website": "https://example.com/priya-shah",
+    "tags": ["design", "net-zero", "urban infill"]
+  },
+  {
+    "id": 8,
+    "name": "Red Willow Design Collective",
+    "type": "business",
+    "role": "Architectural Design Studio",
+    "location": "Santa Fe, NM",
+    "website": "https://example.com/red-willow",
+    "tags": ["passive solar", "adobe", "community projects"]
+  }
+]
+

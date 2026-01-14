@@ -8,26 +8,42 @@ const { title = "NaBA Member Data Visualization" } = Astro.props;
 
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
-		
-		<!-- Leaflet CSS -->
-		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-			integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-			crossorigin=""/>
-		
-		<link rel="stylesheet" href="/src/styles/map.css" />
-	</head>
-	<body>
-		<slot />
-		
-		<!-- Leaflet JavaScript -->
-		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-			integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-			crossorigin=""></script>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+
+    <link rel="stylesheet" href="/src/styles/map.css" />
+  </head>
+  <body>
+    <header style="padding: 0.75rem 1.5rem; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 1rem;">
+      <a href="/" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit;">
+        <img src="/naba-logo.png" alt="Natural Building Alliance" style="height: 32px; width: auto;" />
+        <span style="font-weight: 600; font-size: 1rem;">NaBA</span>
+      </a>
+      <nav style="margin-left: auto; display: flex; gap: 1rem; font-size: 0.9rem;">
+        <a href="/" style="text-decoration: none; color: #333;">Home</a>
+        <a href="/directory?view=members" style="text-decoration: none; color: #333;">Directory</a>
+        <a href="/map" style="text-decoration: none; color: #333;">Map</a>
+      </nav>
+    </header>
+    <slot />
+
+    <!-- Leaflet JavaScript -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+  </body>
 </html>
