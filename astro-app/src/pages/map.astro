@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Map from '../components/Map';
+import MapComponent from '../components/Map';
 import memberCountsData from '../../public/data/memberCounts.json';
 import statsDataRaw from '../../public/data/stats.json';
 import stateMappingData from '../../public/data/stateMapping.json';
@@ -16,7 +16,7 @@ const stateMapping = stateMappingData as Record<string, string>;
 ---
 
 <Layout title="Active Members by State - Choropleth Map">
-  <Map
+  <MapComponent
     client:load
     memberCounts={memberCounts}
     statsData={statsData}
