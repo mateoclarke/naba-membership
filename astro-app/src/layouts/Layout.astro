@@ -34,7 +34,7 @@ const isMapPage = Astro.url.pathname === '/map' || Astro.url.pathname === '/map/
       defer
     ></script>
   </head>
-  <body class={isMapPage ? 'map-page' : ''}>
+  <body class={isMapPage ? 'map-page' : ''} style="min-height: 100vh; display: flex; flex-direction: column; margin: 0;">
     <header 
       class={isMapPage ? 'map-header' : ''}
       style="padding: 0.75rem 1.5rem; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 1rem;">
@@ -42,12 +42,53 @@ const isMapPage = Astro.url.pathname === '/map' || Astro.url.pathname === '/map/
         <img src="/naba-logo.png" alt="Natural Building Alliance" style="height: 32px; width: auto;" />
         <span style="font-weight: 600; font-size: 1rem;">NaBA</span>
       </a>
-      <nav style="margin-left: auto; display: flex; gap: 1rem; font-size: 0.9rem;">
+      <nav style="margin-left: auto; display: flex; gap: 1rem; font-size: 0.9rem; flex-wrap: wrap;">
         <a href="/" style="text-decoration: none; color: #333;">Home</a>
         <a href="/directory?view=members" style="text-decoration: none; color: #333;">Directory</a>
         <a href="/map" style="text-decoration: none; color: #333;">Map</a>
+        <a href="/books" style="text-decoration: none; color: #333;">Books</a>
+        <a href="/account/profile" style="text-decoration: none; color: #333;">Account</a>
       </nav>
     </header>
-    <slot />
+    <div style="flex: 1;">
+      <slot />
+    </div>
+    <footer style="padding: 0.75rem 1.5rem; border-top: 1px solid #e0e0e0; display: flex; align-items: center; justify-content: flex-end; gap: 1rem; font-size: 0.82rem; color: #999;">
+      <div id="admin-toggle-container" style="display: none; margin-right: auto;">
+        <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none; font-size: 0.8rem; color: #666;">
+          <input type="checkbox" id="admin-show-all-toggle" style="cursor: pointer;" />
+          Show all members
+        </label>
+      </div>
+      <a href="/about" style="color: #777; text-decoration: none;">About</a>
+    </footer>
+    <script is:inline>
+      (function () {
+        var TOKEN_KEY = 'naba_member_access_token';
+        var TOGGLE_KEY = 'naba_admin_show_all';
+        var token = null;
+        try { token = localStorage.getItem(TOKEN_KEY); } catch (e) {}
+        if (!token) return;
+
+        var container = document.getElementById('admin-toggle-container');
+        var cb = document.getElementById('admin-show-all-toggle');
+        if (!container || !cb) return;
+
+        container.style.display = 'block';
+
+        try {
+          cb.checked = localStorage.getItem(TOGGLE_KEY) === '1';
+        } catch (e) {}
+
+        cb.addEventListener('change', function () {
+          try {
+            localStorage.setItem(TOGGLE_KEY, cb.checked ? '1' : '0');
+          } catch (e) {}
+          if (window.location.pathname.startsWith('/directory')) {
+            window.location.reload();
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

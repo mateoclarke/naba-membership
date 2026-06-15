@@ -1,0 +1,127 @@
+---
+import Layout from '../layouts/Layout.astro';
+import booksData from '../../public/data/books.json';
+
+interface BookEntry {
+  slug: string;
+  title: string;
+  author?: string;
+  publisher?: string;
+  isbn?: string;
+  conference_speaker?: string;
+  purchase_url: string;
+  purchase_label?: string;
+  cover_path?: string;
+  cover_url?: string;
+}
+
+interface BooksPayload {
+  title: string;
+  subtitle: string;
+  updated_at?: string;
+  books: BookEntry[];
+}
+
+const payload = booksData as BooksPayload;
+const books = payload.books ?? [];
+const pageTitle = payload.title || 'Natural Building Alliance Book Recommendations';
+---
+
+<Layout title={`${pageTitle} — NaBA`}>
+  <main style="max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 3rem;">
+    <header style="margin-bottom: 2rem;">
+      <h1 style="font-size: 1.85rem; margin: 0 0 0.35rem;">{pageTitle}</h1>
+      {payload.subtitle && (
+        <p style="margin: 0; color: #64748b; font-size: 0.95rem; max-width: 640px;">
+          {payload.subtitle}
+        </p>
+      )}
+      {payload.updated_at && (
+        <p style="margin: 0.75rem 0 0; color: #94a3b8; font-size: 0.8rem;">
+          Updated {new Date(payload.updated_at).toLocaleDateString()}
+        </p>
+      )}
+    </header>
+
+    {books.length === 0 ? (
+      <p style="color: #64748b;">
+        No books yet. Run <code>python -m scripts.sync_book_covers</code> from the repo root.
+      </p>
+    ) : (
+      <section
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem;"
+        aria-label="Book gallery"
+      >
+        {books.map((book) => {
+          const coverSrc = book.cover_path || book.cover_url || '';
+          const meta = [book.author, book.publisher].filter(Boolean).join(' · ');
+          const speaker =
+            book.conference_speaker &&
+            ['y', 'yes', 'true'].includes(String(book.conference_speaker).trim().toLowerCase());
+
+          const buttonLabel =
+            book.purchase_label ||
+            (book.purchase_url.includes('bookshop.org') ? 'Buy on Bookshop.org' : 'Buy online');
+
+          return (
+            <article
+              style="border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden; background: #fff; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(15,23,42,0.04);"
+            >
+              <a
+                href={book.purchase_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style="text-decoration: none; color: inherit; display: flex; flex-direction: column; flex: 1;"
+              >
+                <div
+                  style="background: #f8fafc; min-height: 220px; display: flex; align-items: center; justify-content: center;"
+                >
+                  {coverSrc ? (
+                    <img
+                      src={coverSrc}
+                      alt={`${book.title} cover`}
+                      loading="lazy"
+                      style="width: 100%; height: 220px; object-fit: contain; display: block;"
+                    />
+                  ) : (
+                    <span style="color: #94a3b8; font-size: 0.85rem; padding: 1rem; text-align: center;">
+                      Cover unavailable
+                    </span>
+                  )}
+                </div>
+                <div style="padding: 1rem 1rem 1.25rem; flex: 1; display: flex; flex-direction: column;">
+                  <h2 style="margin: 0 0 0.35rem; font-size: 1rem; line-height: 1.35; font-weight: 600;">
+                    {book.title}
+                  </h2>
+                  {meta && (
+                    <p style="margin: 0 0 0.75rem; color: #64748b; font-size: 0.85rem; line-height: 1.4;">
+                      {meta}
+                    </p>
+                  )}
+                  <div style="margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+                    <span
+                      style="display: inline-block; background: #0f766e; color: #fff; padding: 0.4rem 0.75rem; border-radius: 999px; font-size: 0.78rem;"
+                    >
+                      {buttonLabel}
+                    </span>
+                    {speaker && (
+                      <span
+                        style="display: inline-block; background: #dbeafe; color: #1d4ed8; padding: 0.35rem 0.6rem; border-radius: 999px; font-size: 0.72rem;"
+                      >
+                        Conference speaker
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </a>
+            </article>
+          );
+        })}
+      </section>
+    )}
+
+    <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 0.8rem;">
+      Purchase links go to the seller listed for each book. Cover images from Open Library and Amazon.
+    </footer>
+  </main>
+</Layout>
