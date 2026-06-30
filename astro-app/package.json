@@ -11,10 +11,10 @@
     "export-data": "python3 ../scripts/export_member_data.py \"../data/NaBA Members.csv\" || true"
   },
   "dependencies": {
-    "@astrojs/react": "^4.4.2",
+    "@astrojs/react": "^6.0.0",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
-    "astro": "^5.16.9",
+    "astro": "^7.0.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },
