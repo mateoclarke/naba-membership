@@ -63,10 +63,12 @@ Manual curl-style checks: `bash scripts/e2e_manual_checks.sh` (requires `WP_API_
 | Approach | Summary |
 |----------|---------|
 | **Static** | Sync → `export_directory_json` → `npm run build` → deploy `dist/` (data stale until next build). |
-| **Runtime API** | Deploy FastAPI; set `PUBLIC_MEMBERSHIP_API_URL` on Netlify; client fetches live API. |
+| **Runtime API** | Deploy FastAPI on a DigitalOcean Droplet; set `PUBLIC_MEMBERSHIP_API_URL` on Netlify; client fetches live API. |
 | **Hybrid** | Deploy API + keep exported JSON as fallback (current `directory.astro` behavior). |
 
-See `docs/tasks/06-e2e-testing.md` for the full checklist and `docs/plan-wp-frontend-integration.md` for architecture.
+**Production API (recommended):** see [`docs/deploy-digitalocean-droplet.md`](docs/deploy-digitalocean-droplet.md) (systemd + nginx + daily MemberPress sync).
+
+See `docs/tasks/archive/06-e2e-testing.md` for the full checklist and `docs/plan-wp-frontend-integration.md` for architecture.
 
 ### Book recommendations gallery
 
