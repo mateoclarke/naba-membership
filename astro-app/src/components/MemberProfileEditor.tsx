@@ -312,6 +312,8 @@ export default function MemberProfileEditor({
       body.opted_in = optedIn;
       body.badges_csv = badgesCsv.trim() || null;
       body.entry_type = entryType;
+    } else {
+      body.opted_in = optedIn;
     }
     const sj = socialJson.trim();
     if (sj) {
@@ -658,14 +660,8 @@ export default function MemberProfileEditor({
           <p style={{ margin: '0 0 0.35rem 0' }}>
             <strong>Entry type</strong> {profile.entry_type}
           </p>
-          {isAdminMode ? null : (
-            <p style={{ margin: 0 }}>
-              <strong>Directory opt-in</strong> {profile.opted_in ? 'Yes' : 'No'}{' '}
-              <span style={{ color: '#888' }}>(contact NaBA to change)</span>
-            </p>
-          )}
           {!isAdminMode && profile.badges_csv ? (
-            <p style={{ margin: '0.5rem 0 0 0' }}>
+            <p style={{ margin: '0.35rem 0 0 0' }}>
               <strong>Badges</strong> {profile.badges_csv}
             </p>
           ) : null}
@@ -938,13 +934,41 @@ export default function MemberProfileEditor({
       <form onSubmit={saveProfile} style={{ marginTop: '2rem' }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Profile text</h2>
 
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.65rem',
+            marginBottom: '1.25rem',
+            padding: '0.85rem 1rem',
+            border: '1px solid #e0e0e0',
+            borderRadius: '0.5rem',
+            background: '#fafafa',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={optedIn}
+            onChange={(e) => setOptedIn(e.target.checked)}
+            style={{ marginTop: '0.2rem' }}
+          />
+          <span>
+            <strong style={{ display: 'block', marginBottom: '0.2rem' }}>
+              {selectedBusinessId
+                ? 'Show this business in the public directory'
+                : 'Show me in the public directory'}
+            </strong>
+            <span style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4 }}>
+              When enabled, this profile can appear in the public directory
+              {selectedBusinessId ? '' : ' or membership directory'} and on the map when
+              coordinates are set.
+            </span>
+          </span>
+        </label>
+
         {isAdminMode ? (
           <fieldset style={{ border: '1px solid #e0e0e0', borderRadius: '0.5rem', padding: '1rem', marginBottom: '1rem' }}>
             <legend style={{ fontSize: '0.9rem', fontWeight: 600 }}>Admin fields</legend>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <input type="checkbox" checked={optedIn} onChange={(e) => setOptedIn(e.target.checked)} />
-              Directory opt-in
-            </label>
             <label style={{ display: 'block', marginBottom: '0.75rem' }}>
               <span style={labelStyle}>Entry type</span>
               <select style={inputStyle} value={entryType} onChange={(e) => setEntryType(e.target.value)}>

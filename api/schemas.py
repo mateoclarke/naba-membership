@@ -308,6 +308,7 @@ class ProfileSelfUpdate(BaseModel):
     materials_csv: Optional[str] = None
     organization: Optional[str] = None
     logo_url: Optional[str] = None
+    opted_in: Optional[bool] = None
 
     @field_validator("categories_csv")
     @classmethod
