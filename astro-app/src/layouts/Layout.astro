@@ -1,5 +1,7 @@
 ---
 import '../styles/map.css';
+import SiteAuthNav from '../components/SiteAuthNav.tsx';
+import MapNavLink from '../components/MapNavLink.tsx';
 
 interface Props {
 	title?: string;
@@ -42,10 +44,11 @@ const isMapPage = Astro.url.pathname === '/map' || Astro.url.pathname === '/map/
         <img src="/naba-logo.png" alt="Natural Building Alliance" style="height: 32px; width: auto;" />
         <span style="font-weight: 600; font-size: 1rem;">NaBA</span>
       </a>
-      <nav style="margin-left: auto; display: flex; gap: 1rem; font-size: 0.9rem;">
+      <nav style="margin-left: auto; display: flex; align-items: center; gap: 1rem; font-size: 0.9rem;">
         <a href="/" style="text-decoration: none; color: #333;">Home</a>
-        <a href="/directory?view=members" style="text-decoration: none; color: #333;">Directory</a>
-        <a href="/map" style="text-decoration: none; color: #333;">Map</a>
+        <a href="/directory?view=businesses" style="text-decoration: none; color: #333;">Directory</a>
+        <MapNavLink client:load style={{ textDecoration: 'none', color: '#333' }} />
+        <SiteAuthNav client:load />
       </nav>
     </header>
     <slot />

@@ -1,0 +1,88 @@
+curl -s -X POST \
+ "https://mediumturquoise-crab-432395.hostingersite.com/wp-json/simple-jwt-login/v1/auth" \
+ -H "Content-Type: application/json" \
+ -d '{"email":"mateosalinasclarke@proton.me","password":"ruj-GVF3avn4dcr1vaz"}'
+
+curl -s \
+ "https://mediumturquoise-crab-432395.hostingersite.com/wp-json/wp/v2/users/me" \
+ -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE3NzQzMDIzNzEsImV4cCI6MTc3NDkwNzE3MSwiZW1haWwiOiJtYXRlb3NhbGluYXNjbGFya2VAcHJvdG9uLm1lIiwiaWQiOiIzNzIiLCJzaXRlIjoiaHR0cHM6XC9cL21lZGl1bXR1cnF1b2lzZS1jcmFiLTQzMjM5NS5ob3N0aW5nZXJzaXRlLmNvbSIsInVzZXJuYW1lIjoibWF0ZW9zYWxpbmFzY2xhcmtlQHByb3Rvbi5tZSIsImlzcyI6Imh0dHBzOlwvXC9tZWRpdW10dXJxdW9pc2UtY3JhYi00MzIzOTUuaG9zdGluZ2Vyc2l0ZS5jb20ifQ.N0bZh3j4va-x9VcbkMdhmu-sVU6C2Jtx5DzsTQFUJg8"
+
+curl -s -X POST http://127.0.0.1:8000/api/v1/auth/login \
+ -H "Content-Type: application/json" \
+ -d '{"username":"mateosalinasclarke@proton.me","password":"ruj-GVF3avn4dcr1vaz"}' | python3 -m json.tool
+
+mateosalinasclarke@proton.me
+ruj-GVF3avn4dcr1vaz
+
+badges
+
+- plasterer
+- educator
+
+Connect via website
+Groups, discussion
+FB group
+Regional Goals, map visual
+
+david arkin
+Ian Smith
+Lotus Grenier - Thruline Partners (business)
+
+Here are the sponsors for the conference:
+
+Johnny Rezvani
+jr@475.supply 800-995-6329
+
+Love Schack
+Paula@loveschack.com (406) 282-4277
+
+Lotus Grenier lotus@thrulinepartners.com (406) 414-7744
+
+Maria and Todd Giatrelis M 617.852.5219
+Durra Panel USA
+E maria@durrapanelusa.com
+
+Faswall
+Joseph Becker (541) 908 6903 josephb@faswall.com
+
+Clearwater Credit Union
+Erin.White@clearwatercreditunion.org
+Work: 406-493-3357
+Cell: 406-624-1435
+
+Verdant Structural
+Anthony Dente anthony@verdantstructural.com 814-502-6001
+
+Ind Hemp
+mike.cook@indhemp.com (406) 622-5680
+
+Hempitecture
+Mattie Mead
+mattie@hempitecture.com
+
+Hempitecture
+Tommy Gibbons
+tommy@hempitecture.com
+
+Silacote
+Bill Jensen bill@silacote.com 250-770-0064
+
+Gold Hill Clay Plaster
+James Henderson <naturalplasterers@gmail.com>
+goldhillclayplaster@gmail.com
+(920) 723-0867
+
+Emu Passive
+Enrico Bonilauri
+enrico@emupassive.com (833) 945-3368
+
+Building Buereau
+Tyler Survant
+Architect and Instructor at Montana State University
+
+RallyPoint
+
+- Google Analytics ?
+- Commerce plugin
+
+Send CSV

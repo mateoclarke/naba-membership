@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import HomeMapCard from '../components/HomeMapCard.tsx';
 ---
 
 <Layout title="Natural Building Alliance">
@@ -39,14 +40,7 @@ import Layout from '../layouts/Layout.astro';
         </div>
       </a>
 
-      <a href="/map" style="text-decoration: none; color: inherit;">
-        <div style="border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #ddd; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-          <h2 style="margin-top: 0; margin-bottom: 0.5rem;">Member Map</h2>
-          <p style="margin: 0; color: #555;">
-            View an interactive map of active NaBA members by state.
-          </p>
-        </div>
-      </a>
+      <HomeMapCard client:load />
     </section>
   </main>
 </Layout>

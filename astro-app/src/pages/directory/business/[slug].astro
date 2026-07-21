@@ -1,0 +1,414 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import directoryEntries from '../../../../public/data/directoryEntries.json';
+
+type Entry = { id: number; type: string; name: string; slug?: string };
+
+export async function getStaticPaths() {
+  function slugifyName(name: string): string {
+    return (
+      (name || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'member'
+    );
+  }
+  function effectiveSlugFromJson(e: Entry): string {
+    if (e.slug && String(e.slug).trim()) return String(e.slug).trim();
+    return `${slugifyName(e.name)}-${e.id}`;
+  }
+  const apiBase =
+    typeof import.meta.env.PUBLIC_MEMBERSHIP_API_URL === 'string' &&
+    import.meta.env.PUBLIC_MEMBERSHIP_API_URL
+      ? import.meta.env.PUBLIC_MEMBERSHIP_API_URL.replace(/\/$/, '')
+      : '';
+  const businesses = (directoryEntries as Entry[]).filter((e) => e.type === 'business');
+  const segments = new Set<string>();
+  for (const e of businesses) {
+    segments.add(effectiveSlugFromJson(e));
+    segments.add(String(e.id));
+  }
+  if (apiBase) {
+    try {
+      const r = await fetch(
+        `${apiBase}/api/v1/public/members/?entry_type=business&page_size=500`
+      );
+      if (r.ok) {
+        const j = (await r.json()) as {
+          items?: { id: number; slug?: string }[];
+        };
+        for (const item of j.items ?? []) {
+          if (item.slug) segments.add(item.slug);
+          segments.add(String(item.id));
+        }
+      }
+    } catch {
+      /* offline build */
+    }
+  }
+  return [...segments].map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params;
+const pageTitle = 'Business profile';
+const apiBase =
+  typeof import.meta.env.PUBLIC_MEMBERSHIP_API_URL === 'string' &&
+  import.meta.env.PUBLIC_MEMBERSHIP_API_URL
+    ? import.meta.env.PUBLIC_MEMBERSHIP_API_URL.replace(/\/$/, '')
+    : '';
+---
+
+<Layout title={pageTitle}>
+  <main
+    id="business-profile-root"
+    style="max-width: 880px; margin: 0 auto; padding: 2rem 1.5rem;"
+    data-profile-slug={slug}
+  >
+    <p id="bp-loading" style="color: #555;">Loading profile…</p>
+    <div id="bp-error" style="display: none; color: #b91c1c;"></div>
+    <article id="bp-content" style="display: none;"></article>
+  </main>
+
+  <div
+    id="bp-lightbox"
+    style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 1rem;"
+    role="dialog"
+    aria-modal="true"
+  >
+    <button
+      type="button"
+      id="bp-lightbox-close"
+      style="position: absolute; top: 1rem; right: 1rem; background: #fff; border: none; border-radius: 999px; width: 2.5rem; height: 2.5rem; font-size: 1.25rem; cursor: pointer;"
+      aria-label="Close"
+    >
+      ×
+    </button>
+    <img id="bp-lightbox-img" src="" alt="" style="max-width: 100%; max-height: 90vh; object-fit: contain;" />
+  </div>
+
+  <script define:vars={{ apiBase }}>
+    (function () {
+      var root = document.getElementById('business-profile-root');
+      var loading = document.getElementById('bp-loading');
+      var errEl = document.getElementById('bp-error');
+      var content = document.getElementById('bp-content');
+      var lightbox = document.getElementById('bp-lightbox');
+      var lightboxImg = document.getElementById('bp-lightbox-img');
+      var lightboxClose = document.getElementById('bp-lightbox-close');
+
+      var base =
+        apiBase ||
+        (typeof location !== 'undefined' && location.port === '4321'
+          ? 'http://localhost:8000'
+          : '');
+
+      function assetUrl(u) {
+        if (!u) return '';
+        if (/^https?:\/\//i.test(u)) return u;
+        if (u.charAt(0) === '/') return base ? base + u : u;
+        return u;
+      }
+
+      function escapeHtml(s) {
+        if (s == null || s === '') return '';
+        var div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      var seg = root && root.getAttribute('data-profile-slug');
+      if (!seg || !content || !loading || !errEl) return;
+
+      function showError(msg) {
+        loading.style.display = 'none';
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      }
+
+      function openLightbox(src, alt) {
+        if (!lightbox || !lightboxImg) return;
+        lightboxImg.src = src;
+        lightboxImg.alt = alt || '';
+        lightbox.style.display = 'flex';
+      }
+
+      function closeLightbox() {
+        if (lightbox) lightbox.style.display = 'none';
+        if (lightboxImg) lightboxImg.src = '';
+      }
+
+      if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+      if (lightbox)
+        lightbox.addEventListener('click', function (e) {
+          if (e.target === lightbox) closeLightbox();
+        });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeLightbox();
+      });
+
+      function render(p) {
+        if (p.entry_type !== 'business') {
+          showError('This link is only for business directory listings.');
+          return;
+        }
+
+        var loc =
+          p.location_display ||
+          [p.city, p.state_province, p.country].filter(Boolean).join(', ') ||
+          '';
+        var year =
+          typeof p.member_since_year === 'number' && p.member_since_year > 0
+            ? 'Member since ' + p.member_since_year
+            : '';
+        var tags = (p.tags || [])
+          .map(function (t) {
+            return '<span style="font-size: 0.8rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: #f3f3f3; color: #555;">' + escapeHtml(t) + '</span>';
+          })
+          .join(' ');
+        var badges = (p.badges || [])
+          .map(function (b) {
+            return '<span style="font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: #e5e7eb; color: #333;">' + escapeHtml(b) + '</span>';
+          })
+          .join(' ');
+
+        var logoBlock = '';
+        if (p.logo_url) {
+          var lu = assetUrl(p.logo_url);
+          logoBlock =
+            '<img src="' +
+            escapeHtml(lu) +
+            '" alt="" style="width: 96px; height: 96px; object-fit: contain; border-radius: 0.5rem; border: 1px solid #eee; flex-shrink: 0; background: #fff;" />';
+        }
+
+        var bioBlock = p.bio
+          ? '<div style="margin-top: 1.25rem; color: #333; line-height: 1.65; font-size: 1rem;">' +
+            escapeHtml(p.bio).replace(/\n/g, '<br/>') +
+            '</div>'
+          : '';
+
+        var website = p.website_url ? String(p.website_url) : '';
+        var phone = p.phone || '';
+
+        var actions = '<div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem;">';
+        if (website) {
+          actions +=
+            '<a href="' +
+            escapeHtml(website) +
+            '" target="_blank" rel="noreferrer" style="display: inline-block; padding: 0.55rem 1rem; border-radius: 0.5rem; background: #1d4ed8; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.95rem;">Website</a>';
+        }
+        if (phone) {
+          actions +=
+            '<a href="tel:' +
+            escapeHtml(phone.replace(/\s/g, '')) +
+            '" style="display: inline-block; padding: 0.55rem 1rem; border-radius: 0.5rem; background: #374151; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.95rem;">Call</a>';
+        }
+        actions += '</div>';
+
+        var social = p.social || {};
+        var socialHtml = '';
+        var order = ['facebook', 'instagram', 'linkedin', 'twitter', 'x'];
+        order.forEach(function (key) {
+          if (social[key]) {
+            var label = key.charAt(0).toUpperCase() + key.slice(1);
+            socialHtml +=
+              '<a href="' +
+              escapeHtml(String(social[key])) +
+              '" target="_blank" rel="noreferrer" style="margin-right: 0.75rem; font-size: 0.9rem; color: #0057b8;">' +
+              label +
+              '</a>';
+          }
+        });
+        if (socialHtml) {
+          socialHtml =
+            '<div style="margin-top: 1rem;">' + socialHtml + '</div>';
+        }
+
+        var services = (p.services || []).length
+          ? '<p style="margin: 1rem 0 0 0;"><strong>Services:</strong> ' +
+            escapeHtml((p.services || []).join(', ')) +
+            '</p>'
+          : '';
+        var regions = (p.regions || []).length
+          ? '<p style="margin: 0.5rem 0 0 0;"><strong>Regions:</strong> ' +
+            escapeHtml((p.regions || []).join(', ')) +
+            '</p>'
+          : '';
+
+        var gallery = p.gallery || [];
+        var galleryBlock = '';
+        if (gallery.length) {
+          var cells = gallery
+            .map(function (src, i) {
+              var gsrc = assetUrl(src);
+              return (
+                '<button type="button" class="bp-gal" data-src="' +
+                escapeHtml(gsrc) +
+                '" data-alt="Gallery image ' +
+                (i + 1) +
+                '" style="padding: 0; border: 1px solid #e5e5e5; border-radius: 0.5rem; overflow: hidden; cursor: pointer; background: #fafafa;"><img src="' +
+                escapeHtml(gsrc) +
+                '" alt="" style="width: 100%; height: 140px; object-fit: cover; display: block;" /></button>'
+              );
+            })
+            .join('');
+          galleryBlock =
+            '<section style="margin-top: 1.75rem;"><h2 style="font-size: 1.1rem; margin: 0 0 0.75rem 0;">Gallery</h2><div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem;">' +
+            cells +
+            '</div></section>';
+        }
+
+        var team = p.team || [];
+        var teamBlock = '';
+        if (team.length) {
+          var teamItems = team
+            .map(function (m) {
+              var role = m.role_in_business ? ' <span style="color:#666;">(' + escapeHtml(String(m.role_in_business)) + ')</span>' : '';
+              return '<li style="margin:0.35rem 0;">' + escapeHtml(String(m.display_name || 'Member')) + role + '</li>';
+            })
+            .join('');
+          teamBlock =
+            '<section style="margin-top: 1.5rem;"><h2 style="font-size: 1.1rem; margin: 0 0 0.75rem 0;">Team</h2><ul style="margin:0;padding-left:1.1rem;">' +
+            teamItems +
+            '</ul></section>';
+        }
+
+        var connectForm = '';
+        if (p.allow_connect) {
+          connectForm =
+            '<section style="position:relative;margin-top: 2rem; padding: 1.25rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; background: #fafafa;">' +
+            '<h2 style="font-size: 1.1rem; margin: 0 0 0.75rem 0;">Send a message</h2>' +
+            '<p style="margin: 0 0 1rem 0; color: #666; font-size: 0.9rem;">Your message is reviewed before it is forwarded.</p>' +
+            '<form id="bp-connect-form" data-recipient-id="' +
+            escapeHtml(String(p.id)) +
+            '">' +
+            '<div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">' +
+            '<label for="bp-hp">Website</label>' +
+            '<input type="text" id="bp-hp" name="website" tabindex="-1" autocomplete="off" />' +
+            '</div>' +
+            '<label style="display:block;margin-bottom:0.75rem;font-size:0.9rem;">Your name<br/>' +
+            '<input type="text" name="sender_name" required maxlength="100" style="width:100%;max-width:420px;padding:0.5rem;margin-top:0.25rem;border:1px solid #ccc;border-radius:0.35rem;" /></label>' +
+            '<label style="display:block;margin-bottom:0.75rem;font-size:0.9rem;">Your email<br/>' +
+            '<input type="email" name="sender_email" required style="width:100%;max-width:420px;padding:0.5rem;margin-top:0.25rem;border:1px solid #ccc;border-radius:0.35rem;" /></label>' +
+            '<label style="display:block;margin-bottom:0.75rem;font-size:0.9rem;">Message<br/>' +
+            '<textarea name="message" required maxlength="2000" rows="4" style="width:100%;max-width:520px;padding:0.5rem;margin-top:0.25rem;border:1px solid #ccc;border-radius:0.35rem;"></textarea></label>' +
+            '<p id="bp-connect-status" style="margin:0 0 0.5rem 0;font-size:0.9rem;min-height:1.25rem;color:#333;" aria-live="polite"></p>' +
+            '<button type="submit" style="padding:0.55rem 1.6rem;border-radius:0.45rem;border:none;background:#f5c518;color:#222;font-weight:700;font-size:1rem;cursor:pointer;">Connect</button>' +
+            '</form></section>';
+        }
+
+        var html =
+          '<nav style="margin-bottom: 1rem;"><a href="/directory?view=businesses" style="color: #0057b8; font-size: 0.95rem;">← Business directory</a></nav>' +
+          '<header style="display: flex; gap: 1.25rem; align-items: flex-start; flex-wrap: wrap;">' +
+          logoBlock +
+          '<div style="flex: 1; min-width: 0;">' +
+          '<h1 style="margin: 0 0 0.35rem 0; font-size: 1.65rem;">' +
+          escapeHtml(p.display_name) +
+          '</h1>' +
+          (p.organization ? '<p style="margin: 0 0 0.35rem 0; color: #444; font-weight: 500;">' + escapeHtml(p.organization) + '</p>' : '') +
+          '<p style="margin: 0 0 0.35rem 0; color: #555;">' +
+          escapeHtml(p.role || '') +
+          '</p>' +
+          (loc ? '<p style="margin: 0 0 0.35rem 0; color: #666; font-size: 0.95rem;">' + escapeHtml(loc) + '</p>' : '') +
+          (year ? '<p style="margin: 0 0 0.5rem 0; color: #888; font-size: 0.9rem;">' + escapeHtml(year) + '</p>' : '') +
+          '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">' +
+          badges +
+          tags +
+          '</div></div></header>' +
+          bioBlock +
+          actions +
+          socialHtml +
+          (services || regions ? '<div style="margin-top: 1rem;">' + services + regions + '</div>' : '') +
+          teamBlock +
+          galleryBlock +
+          connectForm;
+
+        content.innerHTML = html;
+        loading.style.display = 'none';
+        content.style.display = 'block';
+
+        content.querySelectorAll('.bp-gal').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            openLightbox(btn.getAttribute('data-src') || '', btn.getAttribute('data-alt') || '');
+          });
+        });
+
+        var connectFormEl = content.querySelector('#bp-connect-form');
+        if (connectFormEl) {
+          connectFormEl.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            var statusEl = document.getElementById('bp-connect-status');
+            var fd = new FormData(connectFormEl);
+            var recipientId = parseInt(connectFormEl.getAttribute('data-recipient-id') || '0', 10);
+            var payload = {
+              recipient_id: recipientId,
+              sender_name: String(fd.get('sender_name') || ''),
+              sender_email: String(fd.get('sender_email') || ''),
+              message: String(fd.get('message') || ''),
+              website: String(fd.get('website') || ''),
+            };
+            if (statusEl) statusEl.textContent = 'Sending…';
+            fetch(base + '/api/v1/public/connect', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Referer: typeof location !== 'undefined' ? location.href : '',
+              },
+              body: JSON.stringify(payload),
+            })
+              .then(function (res) {
+                if (res.status === 429) {
+                  throw new Error('Too many requests. Try again later.');
+                }
+                if (!res.ok) {
+                  return res.json().then(function (j) {
+                    var d = j.detail;
+                    var msg =
+                      typeof d === 'string'
+                        ? d
+                        : Array.isArray(d)
+                          ? d
+                              .map(function (x) {
+                                return x.msg || JSON.stringify(x);
+                              })
+                              .join(' ')
+                          : 'Could not send message.';
+                    throw new Error(msg);
+                  });
+                }
+                return res.json();
+              })
+              .then(function (data) {
+                if (statusEl) statusEl.textContent = data.message || 'Sent.';
+                connectFormEl.reset();
+              })
+              .catch(function (e) {
+                if (statusEl) statusEl.textContent = e.message || 'Could not send.';
+              });
+          });
+        }
+      }
+
+      if (!base) {
+        showError('Set PUBLIC_MEMBERSHIP_API_URL to load this profile.');
+        return;
+      }
+
+      var detailUrl =
+        /^\d+$/.test(seg)
+          ? base + '/api/v1/public/members/' + encodeURIComponent(seg)
+          : base + '/api/v1/public/members/by-slug/' + encodeURIComponent(seg);
+
+      fetch(detailUrl)
+        .then(function (res) {
+          if (res.status === 404) throw new Error('Profile not found or not listed.');
+          if (!res.ok) throw new Error('Could not load profile.');
+          return res.json();
+        })
+        .then(render)
+        .catch(function (e) {
+          showError(e.message || 'Could not load profile.');
+        });
+    })();
+  </script>
+</Layout>

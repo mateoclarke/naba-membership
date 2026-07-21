@@ -8,13 +8,15 @@
     "build": "npm run export-data && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "export-data": "python3 ../scripts/export_member_data.py \"../data/NaBA Members.csv\" || true"
+    "export-data": "python3 ../scripts/export_member_data.py \"../data/NaBA Members.csv\" || true",
+    "export-directory": "cd .. && python3 -m scripts.export_directory_json"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "astro": "^5.16.9",
+    "lucide": "^1.0.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },

@@ -1,361 +1,410 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type L from "leaflet";
+import MemberLoginForm from "./MemberLoginForm";
+import {
+  canAccessMembershipDirectory,
+  getJoinMembershipUrl,
+  getStoredToken,
+} from "../lib/membershipApi";
+
+type MapItem = {
+  id: number;
+  display_name: string;
+  entry_type: "individual" | "organization" | "business" | string;
+  role?: string | null;
+  organization?: string | null;
+  city?: string | null;
+  state_province?: string | null;
+  country?: string | null;
+  location_display?: string | null;
+  slug?: string | null;
+  latitude: number;
+  longitude: number;
+};
 
 interface MapProps {
-  memberCounts: Record<string, number>;
-  statsData: {
-    total: number;
-    states: Record<string, number>;
-    canada: number;
-    international: number;
-  };
+  apiBaseUrl: string;
   stateMapping: Record<string, string>;
 }
 
-export default function Map({
-  memberCounts,
-  statsData,
-  stateMapping,
-}: MapProps) {
+type AccessPhase = "checking" | "allowed" | "guest" | "inactive";
+
+function businessPath(item: MapItem): string {
+  if (item.slug && String(item.slug).trim()) {
+    return `/directory/business/${encodeURIComponent(String(item.slug).trim())}`;
+  }
+  const nameSlug =
+    (item.display_name || "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "member";
+  return `/directory/business/${encodeURIComponent(`${nameSlug}-${item.id}`)}`;
+}
+
+function profileLink(item: MapItem): string {
+  if (item.entry_type === "business") return businessPath(item);
+  return "/directory?view=members";
+}
+
+function markerColor(entryType: string): string {
+  if (entryType === "business") return "#1d4ed8";
+  if (entryType === "organization") return "#7c3aed";
+  return "#15803d";
+}
+
+function MapGate({ phase }: { phase: "guest" | "inactive" }) {
+  const inactive = phase === "inactive";
+  return (
+    <main style={{ maxWidth: 480, margin: "2rem auto", padding: "0 1.5rem" }}>
+      <div
+        style={{
+          padding: "1.5rem",
+          border: "1px solid #e0e0e0",
+          borderRadius: "0.75rem",
+          background: "#fafafa",
+          marginBottom: inactive ? 0 : "1.25rem",
+        }}
+      >
+        <h1 style={{ margin: "0 0 0.5rem 0", fontSize: "1.35rem" }}>
+          {inactive ? "Membership renewal needed" : "Members only"}
+        </h1>
+        <p style={{ margin: 0, color: "#555", lineHeight: 1.5, fontSize: "0.95rem" }}>
+          {inactive
+            ? "You are signed in, but your membership is not currently active. Renew to view the member map."
+            : "Sign in with an active NaBA membership to view the interactive member map."}
+        </p>
+        <p style={{ margin: "1rem 0 0 0" }}>
+          <a
+            href={getJoinMembershipUrl()}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "inline-block",
+              padding: "0.55rem 1.25rem",
+              borderRadius: 999,
+              background: "#166534",
+              color: "#fff",
+              textDecoration: "none",
+              fontWeight: 600,
+              fontSize: "0.95rem",
+            }}
+          >
+            {inactive ? "Renew your membership" : "Join as a member"}
+          </a>
+        </p>
+      </div>
+      {!inactive ? <MemberLoginForm redirectTo="/map" compact /> : null}
+    </main>
+  );
+}
+
+export default function Map({ apiBaseUrl, stateMapping }: MapProps) {
   const mapRef = useRef<L.Map | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const geojsonRef = useRef<L.GeoJSON | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [access, setAccess] = useState<AccessPhase>("checking");
+  const [items, setItems] = useState<MapItem[]>([]);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("[Map] useEffect triggered");
-    console.log("[Map] mapContainerRef.current:", mapContainerRef.current);
-    console.log("[Map] mapRef.current:", mapRef.current);
-    console.log(
-      "[Map] window.L available:",
-      typeof (window as any).L !== "undefined"
-    );
-
-    if (!mapContainerRef.current) {
-      console.error(
-        "[Map] mapContainerRef.current is null - container not mounted"
-      );
+    if (canAccessMembershipDirectory()) {
+      setAccess("allowed");
       return;
     }
+    setAccess(getStoredToken() ? "inactive" : "guest");
+  }, []);
 
-    if (mapRef.current) {
-      console.warn("[Map] Map already initialized, skipping");
+  const stateCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const item of items) {
+      if ((item.country || "").toUpperCase() !== "US") continue;
+      const st = (item.state_province || "").trim().toUpperCase();
+      if (!st) continue;
+      counts[st] = (counts[st] || 0) + 1;
+    }
+    return counts;
+  }, [items]);
+
+  const countries = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const item of items) {
+      const country = (item.country || "").trim();
+      if (!country || country.toUpperCase() === "US") continue;
+      map[country] = (map[country] || 0) + 1;
+    }
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const country = (item.country || "").toUpperCase();
+      const state = (item.state_province || "").toUpperCase();
+      if (selectedState) return country === "US" && state === selectedState;
+      if (selectedCountry) return (item.country || "") === selectedCountry;
+      return true;
+    });
+  }, [items, selectedState, selectedCountry]);
+
+  useEffect(() => {
+    if (access !== "allowed") return;
+    const params = new URLSearchParams(window.location.search);
+    const state = (params.get("state") || "").toUpperCase();
+    if (state) setSelectedState(state);
+  }, [access]);
+
+  useEffect(() => {
+    if (access !== "allowed") {
+      setIsLoading(false);
       return;
     }
+    const base = (apiBaseUrl || "").replace(/\/$/, "");
+    if (!base) {
+      setIsLoading(false);
+      return;
+    }
+    const headers: Record<string, string> = {};
+    const token = getStoredToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
 
-    // Wait for Leaflet to be available
-    let retryCount = 0;
-    const maxRetries = 50; // 5 seconds max wait
-
-    const initMap = () => {
-      console.log(
-        `[Map] initMap attempt ${retryCount + 1}, checking for Leaflet...`
-      );
-
-      if (typeof (window as any).L === "undefined") {
-        retryCount++;
-        if (retryCount > maxRetries) {
-          console.error("[Map] Leaflet failed to load after maximum retries");
-          return;
-        }
-        console.warn(
-          `[Map] Leaflet not loaded yet, retrying... (${retryCount}/${maxRetries})`
+    fetch(`${base}/api/v1/public/members/map`, { headers })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        if (!payload || !Array.isArray(payload.items)) return;
+        setItems(
+          payload.items.filter(
+            (x: any) =>
+              typeof x.latitude === "number" && typeof x.longitude === "number"
+          )
         );
-        setTimeout(initMap, 100);
-        return;
-      }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, [apiBaseUrl, access]);
 
-      console.log("[Map] Leaflet found! Initializing map...");
-      console.log("[Map] Container element:", mapContainerRef.current);
+  useEffect(() => {
+    if (access !== "allowed") return;
+    if (!mapContainerRef.current || mapRef.current) return;
+    if (typeof (window as any).L === "undefined") return;
 
-      // Initialize map
-      let map: L.Map;
-      try {
-        console.log("[Map] Creating Leaflet map instance...");
-        map = (window as any).L.map(mapContainerRef.current).setView(
-          [39.8283, -98.5795],
-          4
-        );
-        mapRef.current = map;
-        console.log("[Map] Map instance created successfully:", map);
+    const Lw = (window as any).L;
+    const map = Lw.map(mapContainerRef.current).setView([39.8283, -98.5795], 4);
+    mapRef.current = map;
+    Lw.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+    markersLayerRef.current = Lw.layerGroup().addTo(map);
 
-        // Add tile layer
-        console.log("[Map] Adding tile layer...");
-        (window as any).L.tileLayer(
-          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          {
-            maxZoom: 19,
-            attribution:
-              '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          }
-        ).addTo(map);
-        console.log("[Map] Tile layer added");
-      } catch (error) {
-        console.error("[Map] Error initializing map:", error);
-        return;
-      }
-
-      // Helper function to get state code from feature
-      function getStateCode(feature: any): string | null {
-        if (feature.properties.STUSPS) return feature.properties.STUSPS;
-        if (feature.properties.STATE) return feature.properties.STATE;
-        if (feature.properties.state)
-          return feature.properties.state.toUpperCase();
-        if (feature.properties.name) {
-          const code = stateMapping[feature.properties.name];
-          if (code) return code;
-        }
-        return null;
-      }
-
-      // Color function based on member count
-      function getColor(count: number): string {
-        if (!count || count === 0) return "#f7f7f7";
-        return count > 25
-          ? "#800026"
-          : count > 15
-          ? "#BD0026"
-          : count > 10
-          ? "#E31A1C"
-          : count > 5
-          ? "#FC4E2A"
-          : count > 2
-          ? "#FD8D3C"
-          : count > 0
-          ? "#FED976"
-          : "#f7f7f7";
-      }
-
-      // Style function for GeoJSON features
-      function style(feature: any) {
-        const stateCode = getStateCode(feature);
-        const count = stateCode ? memberCounts[stateCode] || 0 : 0;
-
-        return {
-          fillColor: getColor(count),
-          weight: 2,
-          opacity: 1,
-          color: "white",
-          dashArray: "3",
-          fillOpacity: 0.7,
-        };
-      }
-
-      // Create info control
-      const info = (window as any).L.control();
-      let infoDiv: HTMLElement | null = null;
-
-      info.onAdd = function (this: any, map: L.Map) {
-        infoDiv = (window as any).L.DomUtil.create("div", "info");
-        this._div = infoDiv;
-        updateInfo();
-        return infoDiv;
-      };
-
-      const updateInfo = (props?: { name: string; count: number }) => {
-        if (!infoDiv) {
-          console.warn("[Map] infoDiv is not set");
-          return;
-        }
-        if (props) {
-          infoDiv.innerHTML =
-            "<h4>Active Members by State</h4>" +
-            "<b>" +
-            props.name +
-            "</b><br />" +
-            props.count +
-            " active member" +
-            (props.count !== 1 ? "s" : "");
-        } else {
-          infoDiv.innerHTML =
-            "<h4>Active Members by State</h4>Hover over a state";
-        }
-      };
-
-      info.update = updateInfo;
-      info.addTo(map);
-
-      // Create legend control
-      const legend = (window as any).L.control({ position: "bottomright" });
-      legend.onAdd = function (map: L.Map) {
-        const div = (window as any).L.DomUtil.create("div", "info legend");
-        const grades = [0, 1, 3, 6, 11, 16, 26];
-        for (let i = 0; i < grades.length; i++) {
-          div.innerHTML +=
-            '<i style="background:' +
-            getColor(grades[i] + 1) +
-            '"></i> ' +
-            grades[i] +
-            (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
-        }
-        return div;
-      };
-      legend.addTo(map);
-
-      // Create statistics panel control
-      const stats = (window as any).L.control({ position: "topleft" });
-      stats.onAdd = function (map: L.Map) {
-        const div = (window as any).L.DomUtil.create("div", "stats");
-
-        let html = "<h4>Active Members</h4>";
-        html += '<div class="total">Total: ' + statsData.total + "</div>";
-
-        // US States section - sorted by count (descending)
-        html += '<div class="section">';
-        html += '<div class="section-title">US States:</div>';
-        const states = statsData.states;
-        const stateEntries = Object.keys(states).map((stateCode) => [
-          stateCode,
-          states[stateCode],
-        ]);
-        stateEntries.sort((a, b) => (b[1] as number) - (a[1] as number));
-
-        for (let i = 0; i < stateEntries.length; i++) {
-          const stateCode = stateEntries[i][0];
-          const count = stateEntries[i][1];
-          html += '<div class="state-item">';
-          html += '<span class="state-code">' + stateCode + ":</span> ";
-          html += '<span class="state-count">' + count + "</span>";
-          html += "</div>";
-        }
-        html += "</div>";
-
-        // Canada section
-        if (statsData.canada > 0) {
-          html += '<div class="section">';
-          html += '<div class="state-item">';
-          html += '<span class="state-code">Canada:</span> ';
-          html += '<span class="state-count">' + statsData.canada + "</span>";
-          html += "</div>";
-        }
-
-        // International section
-        if (statsData.international > 0) {
-          html += '<div class="section">';
-          html += '<div class="state-item">';
-          html += '<span class="state-code">International:</span> ';
-          html +=
-            '<span class="state-count">' + statsData.international + "</span>";
-          html += "</div>";
-        }
-
-        div.innerHTML = html;
-
-        // Prevent scroll events in stats panel from zooming the map
-        (window as any).L.DomEvent.disableScrollPropagation(div);
-        (window as any).L.DomEvent.on(
-          div,
-          "mousewheel",
-          (window as any).L.DomEvent.stopPropagation
-        );
-        (window as any).L.DomEvent.on(
-          div,
-          "DOMMouseScroll",
-          (window as any).L.DomEvent.stopPropagation
-        );
-
-        return div;
-      };
-      stats.addTo(map);
-
-      // Event handlers
-      function highlightFeature(e: L.LeafletMouseEvent) {
-        const layer = e.target;
-        layer.setStyle({
-          weight: 5,
-          color: "#666",
-          dashArray: "",
-          fillOpacity: 0.7,
-        });
-
-        if (
-          !(window as any).L.Browser.ie &&
-          !(window as any).L.Browser.opera &&
-          !(window as any).L.Browser.edge
-        ) {
-          layer.bringToFront();
-        }
-
-        const stateCode = getStateCode(layer.feature);
-        const stateName =
-          layer.feature.properties.NAME ||
-          layer.feature.properties.name ||
-          stateCode ||
-          "Unknown";
-        const count = stateCode ? memberCounts[stateCode] || 0 : 0;
-
-        updateInfo({
-          name: stateName,
-          count: count,
-        });
-      }
-
-      function resetHighlight(e: L.LeafletMouseEvent) {
-        if (geojsonRef.current) {
-          geojsonRef.current.resetStyle(e.target);
-        }
-        updateInfo();
-      }
-
-      function zoomToFeature(e: L.LeafletMouseEvent) {
-        map.fitBounds(e.target.getBounds());
-      }
-
-      function onEachFeature(feature: any, layer: L.Layer) {
-        layer.on({
-          mouseover: highlightFeature,
-          mouseout: resetHighlight,
-          click: zoomToFeature,
-        });
-      }
-
-      // Load US states GeoJSON
-      console.log("[Map] Fetching GeoJSON data...");
-      fetch(
-        "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
-      )
-        .then((response) => {
-          console.log("[Map] GeoJSON response status:", response.status);
-          return response.json();
-        })
-        .then((data) => {
-          console.log(
-            "[Map] GeoJSON data loaded, features:",
-            data.features?.length
-          );
-          const geojson = (window as any).L.geoJson(data, {
-            style: style,
-            onEachFeature: onEachFeature,
-          }).addTo(map);
-          geojsonRef.current = geojson;
-          console.log("[Map] GeoJSON layer added to map");
-        })
-        .catch((error) => {
-          console.error("[Map] Error loading GeoJSON:", error);
-          alert(
-            "Failed to load map data. Please check your internet connection."
-          );
-        });
+    const stateCodeFromFeature = (feature: any): string | null => {
+      if (feature?.properties?.STUSPS) return feature.properties.STUSPS;
+      const name = feature?.properties?.name || feature?.properties?.NAME;
+      if (name && stateMapping[name]) return stateMapping[name];
+      return null;
     };
 
-    // Start initialization
-    console.log("[Map] Starting map initialization...");
-    initMap();
+    const stateStyle = (feature: any) => {
+      const stateCode = stateCodeFromFeature(feature);
+      const count = stateCode ? stateCounts[stateCode] || 0 : 0;
+      const isActive = !!stateCode && stateCode === selectedState;
+      return {
+        fillColor: count ? "#c7d2fe" : "#f3f4f6",
+        weight: isActive ? 3 : 1,
+        opacity: 1,
+        color: isActive ? "#3730a3" : "#d1d5db",
+        fillOpacity: isActive ? 0.65 : 0.45,
+      };
+    };
+
+    fetch(
+      "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        const geojson = Lw.geoJson(data, {
+          style: stateStyle,
+          onEachFeature: (feature: any, layer: any) => {
+            const code = stateCodeFromFeature(feature);
+            layer.on("click", () => {
+              if (!code) return;
+              setSelectedCountry("");
+              setSelectedState((prev) => (prev === code ? "" : code));
+              map.fitBounds(layer.getBounds());
+            });
+          },
+        }).addTo(map);
+        geojsonRef.current = geojson;
+      })
+      .catch(() => {});
 
     return () => {
-      console.log("[Map] Cleanup: removing map");
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
+      markersLayerRef.current = null;
+      geojsonRef.current = null;
     };
-  }, [memberCounts, statsData, stateMapping]);
+  }, [access, selectedState, stateCounts, stateMapping]);
 
-  console.log("[Map] Component rendering, returning div");
+  useEffect(() => {
+    if (access !== "allowed") return;
+    const map = mapRef.current;
+    const Lw = (window as any).L;
+    if (!map || !Lw || !markersLayerRef.current) return;
+
+    markersLayerRef.current.clearLayers();
+    for (const item of filteredItems) {
+      const marker = Lw.circleMarker([item.latitude, item.longitude], {
+        radius: 6,
+        color: markerColor(item.entry_type),
+        fillColor: markerColor(item.entry_type),
+        fillOpacity: 0.85,
+        weight: 1,
+      });
+      const details = [item.role, item.location_display].filter(Boolean).join("<br/>");
+      marker.bindPopup(
+        `<div style="min-width:180px;">
+          <strong>${item.display_name}</strong><br/>
+          ${details ? `${details}<br/>` : ""}
+          <a href="${profileLink(item)}">View profile</a>
+        </div>`
+      );
+      marker.addTo(markersLayerRef.current);
+    }
+
+    if (geojsonRef.current) {
+      geojsonRef.current.setStyle((feature: any) => {
+        const code =
+          feature?.properties?.STUSPS ||
+          stateMapping[feature?.properties?.name || feature?.properties?.NAME];
+        const count = code ? stateCounts[code] || 0 : 0;
+        const isActive = !!code && code === selectedState;
+        return {
+          fillColor: count ? "#c7d2fe" : "#f3f4f6",
+          weight: isActive ? 3 : 1,
+          opacity: 1,
+          color: isActive ? "#3730a3" : "#d1d5db",
+          fillOpacity: isActive ? 0.65 : 0.45,
+        };
+      });
+    }
+
+    const url = new URL(window.location.href);
+    if (selectedState) url.searchParams.set("state", selectedState);
+    else url.searchParams.delete("state");
+    window.history.replaceState({}, "", url.toString());
+  }, [access, filteredItems, selectedState, stateCounts, stateMapping]);
+
+  if (access === "checking") {
+    return (
+      <main style={{ maxWidth: 480, margin: "2rem auto", padding: "0 1.5rem", color: "#666" }}>
+        Checking access…
+      </main>
+    );
+  }
+
+  if (access === "guest" || access === "inactive") {
+    return <MapGate phase={access} />;
+  }
+
+  const heading = selectedState
+    ? `State: ${selectedState}`
+    : selectedCountry
+    ? `Country: ${selectedCountry}`
+    : "All mapped members";
+
   return (
-    <div
-      id="map"
-      ref={mapContainerRef}
-      style={{ width: "100%", height: "100vh" }}
-    ></div>
+    <div style={{ position: "relative" }}>
+      <div id="map" ref={mapContainerRef} style={{ width: "100%", height: "100vh" }} />
+      <aside
+        style={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          width: 360,
+          maxHeight: "calc(100vh - 32px)",
+          overflowY: "auto",
+          background: "rgba(255,255,255,0.96)",
+          border: "1px solid #ddd",
+          borderRadius: 10,
+          padding: 12,
+          zIndex: 1000,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+          <strong>{heading}</strong>
+          {(selectedState || selectedCountry) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedState("");
+                setSelectedCountry("");
+              }}
+              style={{ border: "1px solid #ddd", borderRadius: 999, padding: "2px 10px", background: "#fff", cursor: "pointer" }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <p style={{ margin: "8px 0 10px", color: "#666", fontSize: 13 }}>
+          {isLoading ? "Loading markers..." : `${filteredItems.length} results`}
+        </p>
+        {countries.length > 0 && !selectedState && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+            {countries.map(([country, count]) => (
+              <button
+                key={country}
+                type="button"
+                onClick={() => {
+                  setSelectedState("");
+                  setSelectedCountry(country);
+                }}
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: 999,
+                  padding: "2px 8px",
+                  background: selectedCountry === country ? "#111827" : "#fff",
+                  color: selectedCountry === country ? "#fff" : "#111827",
+                  cursor: "pointer",
+                  fontSize: 12,
+                }}
+              >
+                {country} ({count})
+              </button>
+            ))}
+          </div>
+        )}
+        <div style={{ display: "grid", gap: 8 }}>
+          {filteredItems.slice(0, 200).map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                if (!mapRef.current) return;
+                mapRef.current.setView([item.latitude, item.longitude], 8);
+              }}
+              style={{
+                textAlign: "left",
+                border: "1px solid #ececec",
+                background: "#fff",
+                borderRadius: 8,
+                padding: 10,
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ fontWeight: 600 }}>{item.display_name}</div>
+              <div style={{ fontSize: 13, color: "#666" }}>
+                {[item.role, item.location_display].filter(Boolean).join(" - ")}
+              </div>
+            </button>
+          ))}
+        </div>
+      </aside>
+    </div>
   );
 }

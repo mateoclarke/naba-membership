@@ -1,0 +1,20 @@
+[Unit]
+Description=NaBA membership FastAPI (uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/naba-membership
+EnvironmentFile=/etc/naba-membership.env
+ExecStart=/var/www/naba-membership/.venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=3
+
+# Soft hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
