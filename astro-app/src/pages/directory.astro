@@ -175,7 +175,7 @@ function badgeStyle(badge: string): string {
         data-admin-filter="all"
         style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid #ccc; background: #fff; color: #333; font-size: 0.85rem; cursor: pointer;"
       >
-        All members
+        All listings
       </button>
     </div>
 
@@ -806,11 +806,12 @@ function badgeStyle(badge: string): string {
         applyMaterialFilter();
       }
 
-      function loadBusinessesFromApi() {
+      function loadBusinessesFromApi(showAll) {
         if (!apiBaseUrl || !businessesSection) return Promise.resolve();
-        return fetchAllPublicMembers(apiBaseUrl, false, 'business')
+        return fetchAllPublicMembers(apiBaseUrl, Boolean(showAll), 'business')
           .then(function (data) {
-            if (!data || !Array.isArray(data.items) || data.items.length === 0) return;
+            if (!data || !Array.isArray(data.items)) return;
+            // Empty list is valid (no opted-in businesses yet) — still replace static fallback.
             renderDirectoryEntries(data.items.map(mapApiItemToEntry), {
               updateMembers: false,
               updateBusinesses: true,
@@ -832,6 +833,17 @@ function badgeStyle(badge: string): string {
           .catch(function () {});
       }
 
+      function reloadAdminDirectory() {
+        var showAll = isLoggedInAdmin() && getAdminShowAll();
+        if (view === 'members') {
+          if (!canAccessMembershipDirectory()) return;
+          loadMembersFromApi(showAll);
+        } else {
+          loadBusinessesFromApi(showAll);
+        }
+      }
+
+      var adminFilterBound = false;
       function setupAdminVisibilityFilter() {
         var bar = document.getElementById('directory-admin-visibility');
         var optedBtn = document.getElementById('directory-filter-opted-in');
@@ -840,13 +852,15 @@ function badgeStyle(badge: string): string {
 
         bar.hidden = false;
         bar.style.display = 'flex';
-        var showAll = getAdminShowAll();
-        styleAdminFilterButtons(showAll);
+        styleAdminFilterButtons(getAdminShowAll());
+
+        if (adminFilterBound) return;
+        adminFilterBound = true;
 
         function onToggle(nextShowAll) {
           setAdminShowAll(nextShowAll);
           styleAdminFilterButtons(nextShowAll);
-          loadMembersFromApi(nextShowAll);
+          reloadAdminDirectory();
         }
         optedBtn.addEventListener('click', function () {
           onToggle(false);
@@ -854,6 +868,14 @@ function badgeStyle(badge: string): string {
         allBtn.addEventListener('click', function () {
           onToggle(true);
         });
+      }
+
+      function hideAdminVisibilityFilter() {
+        var adminBar = document.getElementById('directory-admin-visibility');
+        if (adminBar) {
+          adminBar.hidden = true;
+          adminBar.style.display = 'none';
+        }
       }
 
       function applyView(nextView) {
@@ -870,16 +892,19 @@ function badgeStyle(badge: string): string {
             setupAdminVisibilityFilter();
           } else {
             showMembersGate(isLoggedIn() ? 'inactive' : 'guest');
+            hideAdminVisibilityFilter();
           }
         } else {
           hideMembersGate();
           if (membersSection) membersSection.style.display = 'none';
           if (businessesSection) businessesSection.style.display = 'grid';
           if (materialFilters) materialFilters.style.display = '';
-          var adminBar = document.getElementById('directory-admin-visibility');
-          if (adminBar) {
-            adminBar.hidden = true;
-            adminBar.style.display = 'none';
+          if (isLoggedInAdmin()) {
+            setupAdminVisibilityFilter();
+            loadBusinessesFromApi(getAdminShowAll());
+          } else {
+            hideAdminVisibilityFilter();
+            loadBusinessesFromApi(false);
           }
         }
 
@@ -899,7 +924,6 @@ function badgeStyle(badge: string): string {
 
       renderMaterialChips(Array.isArray(allMaterials) ? allMaterials : []);
       applyMaterialFilter();
-      loadBusinessesFromApi();
 
       pills.forEach(function (pill) {
         pill.addEventListener('click', function (event) {

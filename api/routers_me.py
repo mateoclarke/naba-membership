@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -19,8 +20,15 @@ router = APIRouter(prefix="/api/v1/me", tags=["member-self"])
 
 
 def _apply_self_update(profile: DirectoryProfile, body: ProfileSelfUpdate) -> None:
-    for key, value in body.model_dump(exclude_unset=True).items():
+    data = body.model_dump(exclude_unset=True)
+    prev_opted = profile.opted_in
+    for key, value in data.items():
         setattr(profile, key, value)
+    if "opted_in" in data:
+        if data["opted_in"] and not prev_opted:
+            profile.opted_in_at = datetime.now(timezone.utc)
+        elif not data["opted_in"]:
+            profile.opted_in_at = None
 
 
 @router.get("/profile", response_model=ProfileAdminDetail)

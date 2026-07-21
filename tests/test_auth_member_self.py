@@ -115,6 +115,32 @@ def test_me_put_logo_url(client_with_data, auth_env, monkeypatch):
     assert cleared.json()["logo_url"] in (None, "")
 
 
+def test_me_put_opted_in(client_with_data, auth_env, monkeypatch):
+    monkeypatch.setattr("api.routers_auth.authenticate_wp_user", fake_wp_user)
+    token = client_with_data.post(
+        "/api/v1/auth/login",
+        json={"username": "a", "password": "b"},
+    ).json()["access_token"]
+
+    off = client_with_data.put(
+        "/api/v1/me/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"opted_in": False},
+    )
+    assert off.status_code == 200
+    assert off.json()["opted_in"] is False
+    assert off.json()["opted_in_at"] is None
+
+    on = client_with_data.put(
+        "/api/v1/me/profile",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"opted_in": True},
+    )
+    assert on.status_code == 200
+    assert on.json()["opted_in"] is True
+    assert on.json()["opted_in_at"]
+
+
 def test_me_put_scoped_fields(client_with_data, auth_env, monkeypatch):
     monkeypatch.setattr("api.routers_auth.authenticate_wp_user", fake_wp_user)
     token = client_with_data.post(
