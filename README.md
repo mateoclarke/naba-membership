@@ -66,7 +66,7 @@ Manual curl-style checks: `bash scripts/e2e_manual_checks.sh` (requires `WP_API_
 | **Runtime API** | Deploy FastAPI on a DigitalOcean Droplet; set `PUBLIC_MEMBERSHIP_API_URL` on Netlify; client fetches live API. |
 | **Hybrid** | Deploy API + keep exported JSON as fallback (current `directory.astro` behavior). |
 
-**Production API (recommended):** see [`docs/deploy-digitalocean-droplet.md`](docs/deploy-digitalocean-droplet.md) (systemd + nginx + daily MemberPress sync).
+**Production API:** `https://api.natbuild.org` on DigitalOcean (`142.93.177.21`). See [`docs/deploy-digitalocean-droplet.md`](docs/deploy-digitalocean-droplet.md) (systemd + nginx + daily MemberPress sync).
 
 See `docs/tasks/archive/06-e2e-testing.md` for the full checklist and `docs/plan-wp-frontend-integration.md` for architecture.
 
