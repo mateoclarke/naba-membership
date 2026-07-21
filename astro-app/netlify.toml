@@ -3,6 +3,10 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  PUBLIC_MEMBERSHIP_API_URL = "https://api.natbuild.org"
+  PUBLIC_JOIN_MEMBERSHIP_URL = "https://natural-building-alliance.org/register/"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

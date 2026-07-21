@@ -53,11 +53,11 @@ WP_API_KEY=REPLACE_ME
 WP_SITE_URL=https://natural-building-alliance.org
 AUTH_JWT_SECRET=${AUTH_JWT_SECRET}
 ADMIN_API_KEY=${ADMIN_API_KEY}
-CORS_ORIGINS=https://REPLACE_ME.netlify.app
+CORS_ORIGINS=https://naba-membership.netlify.app,https://members.natbuild.org,https://natbuild.org,http://natbuild.org
 UPLOADS_ROOT=${APP_ROOT}/uploads
 EOF
   chmod 600 "$ENV_FILE"
-  echo "Created $ENV_FILE — edit WP_API_KEY and CORS_ORIGINS before relying on prod."
+  echo "Created $ENV_FILE — edit WP_API_KEY before relying on prod."
 else
   echo "Keeping existing $ENV_FILE"
 fi
@@ -89,8 +89,8 @@ touch /var/log/naba-sync.log
 chown www-data:www-data /var/log/naba-sync.log
 
 echo
-echo "Bootstrap complete."
+echo "Bootstrap complete for https://${NABA_DOMAIN}"
 echo "1) Edit secrets: nano $ENV_FILE"
 echo "2) Restart API:  systemctl restart naba-membership.api"
-echo "3) Initial sync: sudo -u www-data bash -c 'set -a; source $ENV_FILE; set +a; cd $APP_ROOT && .venv/bin/python -m scripts.sync_from_wordpress'"
+echo "3) Initial sync: sudo bash -c 'set -a; source $ENV_FILE; set +a; cd $APP_ROOT && sudo -E -u www-data .venv/bin/python -m scripts.sync_from_wordpress'"
 echo "4) Health:       curl -sS https://$NABA_DOMAIN/health || curl -sS http://$NABA_DOMAIN/health"
