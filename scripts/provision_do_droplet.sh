@@ -4,12 +4,12 @@
 #
 # Usage:
 #   export DIGITALOCEAN_ACCESS_TOKEN=...
-#   export NABA_DOMAIN=api.members.example.com   # DNS you will point at the droplet
+#   export NABA_DOMAIN=api.natbuild.org   # DNS you will point at the droplet
 #   bash scripts/provision_do_droplet.sh
 set -euo pipefail
 
 TOKEN="${DIGITALOCEAN_ACCESS_TOKEN:?Set DIGITALOCEAN_ACCESS_TOKEN}"
-NABA_DOMAIN="${NABA_DOMAIN:?Set NABA_DOMAIN (hostname you will DNS to this droplet)}"
+NABA_DOMAIN="${NABA_DOMAIN:-api.natbuild.org}"
 REGION="${DO_REGION:-nyc3}"
 SIZE="${DO_SIZE:-s-1vcpu-1gb}"
 IMAGE="${DO_IMAGE:-ubuntu-24-04-x64}"
