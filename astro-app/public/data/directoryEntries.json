@@ -1,74 +1,239 @@
 [
   {
     "id": 1,
-    "name": "Earthbound Builders Cooperative",
-    "type": "business",
-    "role": "Design–Build Cooperative",
-    "location": "Bozeman, MT",
-    "website": "https://example.com/earthbound",
-    "tags": ["straw bale", "timber framing", "natural plasters"]
-  },
-  {
-    "id": 2,
-    "name": "High Plains Hemp Construction",
-    "type": "business",
-    "role": "Hempcrete Contractor",
-    "location": "Fort Collins, CO",
-    "website": "https://example.com/high-plains-hemp",
-    "tags": ["hempcrete", "retrofit", "consulting"]
-  },
-  {
-    "id": 3,
-    "name": "Wild Clay Studio",
-    "type": "business",
-    "role": "Natural Plaster & Finish Studio",
-    "location": "Portland, OR",
-    "website": "https://example.com/wild-clay",
-    "tags": ["clay plasters", "pigments", "training"]
-  },
-  {
-    "id": 4,
-    "name": "Mountain Strawbale Institute",
-    "type": "organization",
-    "role": "Educational Non-Profit",
-    "location": "Missoula, MT",
-    "website": "https://example.com/mountain-strawbale",
-    "tags": ["education", "workshops", "research"]
-  },
-  {
-    "id": 5,
-    "name": "Natural Building Lab – University Program",
-    "type": "organization",
-    "role": "University Lab",
-    "location": "Boulder, CO",
-    "website": "https://example.com/natural-building-lab",
-    "tags": ["university", "student projects", "research"]
-  },
-  {
-    "id": 6,
-    "name": "Alex Rivera",
+    "name": "Jean Lotus",
     "type": "individual",
-    "role": "Natural Builder & Instructor",
-    "location": "Taos, NM",
-    "website": "https://example.com/alex-rivera",
-    "tags": ["cob", "straw bale", "workshops"]
+    "role": "Individual One-Time Membership",
+    "location": "Fort Collins, CO (US)",
+    "tags": [
+      "individual",
+      "donor"
+    ],
+    "badges": [
+      "staff"
+    ],
+    "categories": [
+      "educator"
+    ],
+    "materials": [
+      "natural plaster"
+    ],
+    "member_since_year": 2019
   },
   {
-    "id": 7,
-    "name": "Priya Shah",
+    "id": 18,
+    "name": "David Kaplan",
     "type": "individual",
-    "role": "Architect",
-    "location": "Berkeley, CA",
-    "website": "https://example.com/priya-shah",
-    "tags": ["design", "net-zero", "urban infill"]
+    "role": "Individual One-Time Membership",
+    "location": "",
+    "tags": [
+      "individual"
+    ],
+    "badges": [
+      "board"
+    ],
+    "member_since_year": 2018
   },
   {
-    "id": 8,
-    "name": "Red Willow Design Collective",
+    "id": 24,
+    "name": "Mark Jensen",
+    "type": "individual",
+    "role": "Individual One-Time Membership",
+    "location": "",
+    "tags": [
+      "individual"
+    ],
+    "badges": [
+      "board"
+    ],
+    "member_since_year": 2018
+  },
+  {
+    "id": 27,
+    "name": "Liz Johndrow",
+    "type": "individual",
+    "role": "Individual One-Time Membership",
+    "location": "Putney, AL (US)",
+    "tags": [
+      "individual"
+    ],
+    "badges": [],
+    "member_since_year": 2025
+  },
+  {
+    "id": 93,
+    "name": "Lindsey Love",
+    "type": "individual",
+    "role": "Member",
+    "location": "",
+    "tags": [],
+    "badges": [
+      "board"
+    ],
+    "member_since_year": 2020
+  },
+  {
+    "id": 111,
+    "name": "Kenny Fallon",
+    "type": "individual",
+    "role": "Individual One-Time Membership",
+    "location": "Green River, UT (US)",
+    "tags": [
+      "individual"
+    ],
+    "badges": [
+      "former board"
+    ],
+    "member_since_year": 2023
+  },
+  {
+    "id": 158,
+    "name": "Susan Klinker",
+    "type": "individual",
+    "role": "Individual One-Time Membership",
+    "location": "Salt Lake City, UT (US)",
+    "tags": [
+      "individual"
+    ],
+    "badges": [
+      "board"
+    ],
+    "member_since_year": 2020
+  },
+  {
+    "id": 259,
+    "name": "Kluane Gorsuch",
+    "type": "individual",
+    "role": "Member",
+    "location": "",
+    "tags": [],
+    "badges": [
+      "board"
+    ],
+    "member_since_year": 2021
+  },
+  {
+    "id": 364,
+    "name": "Living Craft",
     "type": "business",
-    "role": "Architectural Design Studio",
-    "location": "Santa Fe, NM",
-    "website": "https://example.com/red-willow",
-    "tags": ["passive solar", "adobe", "community projects"]
+    "role": "Professional Membership",
+    "location": "Arvada, CO (US)",
+    "tags": [
+      "professional"
+    ],
+    "badges": [],
+    "categories": [
+      "professional",
+      "vendor"
+    ],
+    "materials": [
+      "hempcrete",
+      "timber framing"
+    ],
+    "org": "Living Craft",
+    "website": "https://livingcraft.com/",
+    "member_since_year": 2025,
+    "logo_url": "https://natural-building-alliance.org/wp-content/uploads/2019/03/NBA_Sponsor_Logo-Living-Craft.png"
+  },
+  {
+    "id": 372,
+    "name": "Mateo Clarke",
+    "type": "individual",
+    "role": "Member",
+    "location": "Ranchos de Taos, NM (US)",
+    "tags": [],
+    "badges": [
+      "board"
+    ],
+    "categories": [
+      "owner/builder"
+    ],
+    "materials": [
+      "straw bale"
+    ],
+    "member_since_year": 2024
+  },
+  {
+    "id": 545,
+    "name": "Laura Clarke",
+    "type": "individual",
+    "role": "Individual One-Time Membership",
+    "location": "",
+    "tags": [
+      "individual"
+    ],
+    "badges": [],
+    "categories": [
+      "owner/builder"
+    ],
+    "materials": [
+      "adobe",
+      "cob"
+    ],
+    "member_since_year": 2025
+  },
+  {
+    "id": 9000,
+    "name": "Elevated Design Build",
+    "type": "business",
+    "role": "Professional Membership",
+    "location": "",
+    "tags": [
+      "professional"
+    ],
+    "badges": [],
+    "categories": [
+      "professional",
+      "vendor"
+    ],
+    "materials": [
+      "natural plaster",
+      "straw bale"
+    ],
+    "org": "Elevated Design Build",
+    "website": "https://elevateddesignbuild.com/",
+    "logo_url": "https://elevateddesignbuild.com/wp-content/uploads/2025/04/Logo.svg"
+  },
+  {
+    "id": 9001,
+    "name": "The Last Straw",
+    "type": "business",
+    "role": "Sponsor",
+    "location": "",
+    "tags": [
+      "sponsor"
+    ],
+    "badges": [],
+    "org": "The Last Straw Journal",
+    "website": "https://www.thelaststraw.org/",
+    "logo_url": "https://www.thelaststraw.org/wp-content/uploads/2023/05/logo_egg_2023_dark.png"
+  },
+  {
+    "id": 9002,
+    "name": "Caddis Collaborative",
+    "type": "business",
+    "role": "Professional Membership",
+    "location": "",
+    "tags": [
+      "professional"
+    ],
+    "badges": [],
+    "org": "Caddis Collaborative",
+    "website": "https://caddispc.com/",
+    "logo_url": "https://caddispc.com/wp-content/uploads/2024/04/caddis-logo-horz-spaced.png"
+  },
+  {
+    "id": 9003,
+    "name": "Earthaus Plaster",
+    "type": "business",
+    "role": "Professional Membership",
+    "location": "",
+    "tags": [
+      "professional"
+    ],
+    "badges": [],
+    "org": "Earthaus Plaster",
+    "website": "https://earthausplaster.com/",
+    "logo_url": "https://earthausplaster.com/cdn/shop/files/Earthaus_Logo_Variations_wordmark_charcoal_1200x1200.png"
   }
 ]

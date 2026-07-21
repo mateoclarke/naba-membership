@@ -1,25 +1,21 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MapComponent from '../components/Map';
-import memberCountsData from '../../public/data/memberCounts.json';
-import statsDataRaw from '../../public/data/stats.json';
 import stateMappingData from '../../public/data/stateMapping.json';
 
-const memberCounts = memberCountsData as Record<string, number>;
-const statsData = statsDataRaw as {
-  total: number;
-  states: Record<string, number>;
-  canada: number;
-  international: number;
-};
 const stateMapping = stateMappingData as Record<string, string>;
+const apiBaseUrl =
+  typeof import.meta.env.PUBLIC_MEMBERSHIP_API_URL === 'string' && import.meta.env.PUBLIC_MEMBERSHIP_API_URL
+    ? import.meta.env.PUBLIC_MEMBERSHIP_API_URL
+    : import.meta.env.DEV
+      ? 'http://localhost:8000'
+      : '';
 ---
 
-<Layout title="Active Members by State - Choropleth Map">
+<Layout title="Member Map - NaBA Directory">
   <MapComponent
     client:load
-    memberCounts={memberCounts}
-    statsData={statsData}
+    apiBaseUrl={apiBaseUrl}
     stateMapping={stateMapping}
   />
 </Layout>

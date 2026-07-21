@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MemberLoginForm from '../components/MemberLoginForm.tsx';
+---
+
+<Layout title="Member sign in — NaBA">
+  <MemberLoginForm client:load redirectTo="/directory?view=members" />
+</Layout>

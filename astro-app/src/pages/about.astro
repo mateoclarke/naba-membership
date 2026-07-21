@@ -1,0 +1,495 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="How it works — NaBA Directory">
+  <main style="max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem;">
+    <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">How the NaBA Directory Works</h1>
+    <p style="color: #555; font-size: 0.95rem; margin-bottom: 2.5rem;">
+      A high-level overview of how member data flows from WordPress to this directory — and how privacy is protected every step of the way.
+    </p>
+
+    <!-- ── ARCHITECTURE DIAGRAM ── -->
+    <section style="margin-bottom: 3rem;">
+      <div style="
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 2rem 1.5rem;
+        overflow-x: auto;
+      ">
+        <!-- Row 1: WordPress -->
+        <div style="display: flex; justify-content: center; margin-bottom: 0.5rem;">
+          <div style="
+            background: #1e40af;
+            color: #fff;
+            padding: 1.25rem 2rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            min-width: 280px;
+            box-shadow: 0 2px 8px rgba(30,64,175,0.15);
+          ">
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">&#127760;</div>
+            <div style="font-weight: 700; font-size: 1.05rem;">WordPress + MemberPress</div>
+            <div style="font-size: 0.8rem; opacity: 0.85; margin-top: 0.25rem;">
+              Membership billing, accounts &amp; login credentials
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 1 -->
+        <div style="display: flex; justify-content: center; padding: 0.25rem 0;">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 2px; height: 20px; background: #94a3b8;"></div>
+            <div style="
+              width: 0; height: 0;
+              border-left: 8px solid transparent;
+              border-right: 8px solid transparent;
+              border-top: 10px solid #94a3b8;
+            "></div>
+            <div style="font-size: 0.7rem; color: #64748b; margin-top: 4px; white-space: nowrap;">
+              Secure API sync
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: NaBA API -->
+        <div style="display: flex; justify-content: center; margin-bottom: 0.5rem;">
+          <div style="
+            background: #059669;
+            color: #fff;
+            padding: 1.25rem 2rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            min-width: 280px;
+            box-shadow: 0 2px 8px rgba(5,150,105,0.15);
+          ">
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">&#128274;</div>
+            <div style="font-weight: 700; font-size: 1.05rem;">NaBA Directory API</div>
+            <div style="font-size: 0.8rem; opacity: 0.85; margin-top: 0.25rem;">
+              Filters &amp; serves only opted-in profiles
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 2 -->
+        <div style="display: flex; justify-content: center; padding: 0.25rem 0;">
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 2px; height: 20px; background: #94a3b8;"></div>
+            <div style="
+              width: 0; height: 0;
+              border-left: 8px solid transparent;
+              border-right: 8px solid transparent;
+              border-top: 10px solid #94a3b8;
+            "></div>
+            <div style="font-size: 0.7rem; color: #64748b; margin-top: 4px; white-space: nowrap;">
+              Public data only
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: This Website -->
+        <div style="display: flex; justify-content: center;">
+          <div style="
+            background: #7c3aed;
+            color: #fff;
+            padding: 1.25rem 2rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            min-width: 280px;
+            box-shadow: 0 2px 8px rgba(124,58,237,0.15);
+          ">
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">&#128196;</div>
+            <div style="font-weight: 700; font-size: 1.05rem;">NaBA Directory Website</div>
+            <div style="font-size: 0.8rem; opacity: 0.85; margin-top: 0.25rem;">
+              Member directory, business listings &amp; map
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── KEY CONCEPTS ── -->
+    <section style="margin-bottom: 3rem;">
+      <h2 style="font-size: 1.25rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+        Key concepts
+      </h2>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem;">
+        <!-- Card 1 -->
+        <div style="
+          border: 1px solid #e2e8f0;
+          border-radius: 0.75rem;
+          padding: 1.25rem;
+          background: #fff;
+        ">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">&#128101;</div>
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">WordPress is the source of truth</h3>
+          <p style="margin: 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+            All member accounts, billing, and membership status live in
+            <strong>WordPress + MemberPress</strong> — the same system members
+            already use. Nothing changes for them.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div style="
+          border: 1px solid #e2e8f0;
+          border-radius: 0.75rem;
+          padding: 1.25rem;
+          background: #fff;
+        ">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">&#9989;</div>
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">Opt-in only</h3>
+          <p style="margin: 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+            Members are <strong>hidden by default</strong>. A member only
+            appears in the public directory after they explicitly opt in. No one
+            is listed without their consent.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div style="
+          border: 1px solid #e2e8f0;
+          border-radius: 0.75rem;
+          padding: 1.25rem;
+          background: #fff;
+        ">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">&#128272;</div>
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">Same login, no new passwords</h3>
+          <p style="margin: 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+            Members sign in with their <strong>existing WordPress credentials</strong>.
+            The directory verifies identity through WordPress — no separate
+            account or password to manage.
+          </p>
+        </div>
+
+        <!-- Card 4 -->
+        <div style="
+          border: 1px solid #e2e8f0;
+          border-radius: 0.75rem;
+          padding: 1.25rem;
+          background: #fff;
+        ">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">&#128064;</div>
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">Privacy controls</h3>
+          <p style="margin: 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+            Opted-in members can choose to <strong>hide their city</strong> and
+            <strong>"member since" date</strong>. They can also enable or
+            disable a "Connect" form that lets visitors reach out.
+          </p>
+        </div>
+
+        <!-- Card 5 -->
+        <div style="
+          border: 1px solid #e2e8f0;
+          border-radius: 0.75rem;
+          padding: 1.25rem;
+          background: #fff;
+        ">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">&#127970;</div>
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">Business listings</h3>
+          <p style="margin: 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+            Businesses and professional members get <strong>rich profiles</strong>
+            with logos, bios, galleries, and detail pages — separate from the
+            simpler individual member cards.
+          </p>
+        </div>
+
+        <!-- Card 6 -->
+        <div style="
+          border: 1px solid #e2e8f0;
+          border-radius: 0.75rem;
+          padding: 1.25rem;
+          background: #fff;
+        ">
+          <div style="font-size: 1.75rem; margin-bottom: 0.5rem;">&#128736;</div>
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 1rem;">Self-service editing</h3>
+          <p style="margin: 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+            After signing in, members can <strong>edit their own profile</strong> —
+            update their bio, upload a logo, change privacy settings — without
+            needing to contact an admin.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── STEP-BY-STEP FLOW ── -->
+    <section style="margin-bottom: 3rem;">
+      <h2 style="font-size: 1.25rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+        How data flows, step by step
+      </h2>
+
+      <ol style="
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        counter-reset: step;
+      ">
+        <li style="
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          align-items: flex-start;
+        ">
+          <div style="
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1e40af;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+          ">1</div>
+          <div>
+            <strong style="font-size: 0.95rem;">Members join via WordPress</strong>
+            <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+              A person signs up and pays through the NaBA website (powered by
+              MemberPress). Their account, contact info, and membership level
+              are stored in WordPress.
+            </p>
+          </div>
+        </li>
+
+        <li style="
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          align-items: flex-start;
+        ">
+          <div style="
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1e40af;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+          ">2</div>
+          <div>
+            <strong style="font-size: 0.95rem;">Data syncs securely</strong>
+            <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+              A sync process pulls member data from the MemberPress API into
+              the directory's own database using an authenticated, encrypted
+              connection. Enrichment data (bios, logos, badges) is preserved
+              across syncs.
+            </p>
+          </div>
+        </li>
+
+        <li style="
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          align-items: flex-start;
+        ">
+          <div style="
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #059669;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+          ">3</div>
+          <div>
+            <strong style="font-size: 0.95rem;">Only opted-in profiles are published</strong>
+            <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+              The directory API filters out anyone who hasn't opted in. Even if
+              NaBA has 500 members, only those who choose to appear will show
+              up. Private data (email, phone) is never exposed publicly.
+            </p>
+          </div>
+        </li>
+
+        <li style="
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          align-items: flex-start;
+        ">
+          <div style="
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #7c3aed;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+          ">4</div>
+          <div>
+            <strong style="font-size: 0.95rem;">The website displays the directory</strong>
+            <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+              Visitors see a member directory, a business directory, and an
+              interactive map — all populated from the filtered, public data.
+              No login is required to browse.
+            </p>
+          </div>
+        </li>
+
+        <li style="
+          display: flex;
+          gap: 1rem;
+          align-items: flex-start;
+        ">
+          <div style="
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #7c3aed;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+          ">5</div>
+          <div>
+            <strong style="font-size: 0.95rem;">Members sign in to edit their profiles</strong>
+            <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: #555; line-height: 1.5;">
+              Using their same WordPress email and password, a member can sign
+              in here to update their bio, upload images, and control their
+              privacy settings — all without creating a new account.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ── LOGIN FLOW DETAIL ── -->
+    <section style="margin-bottom: 3rem;">
+      <h2 style="font-size: 1.25rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+        How login works
+      </h2>
+
+      <div style="
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 1.5rem;
+      ">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; align-items: center;">
+          <!-- Step A -->
+          <div style="
+            flex: 1 1 180px;
+            max-width: 220px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+          ">
+            <div style="font-size: 1.5rem; margin-bottom: 0.35rem;">&#128100;</div>
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem;">Member</div>
+            <div style="font-size: 0.78rem; color: #555;">
+              Enters their WordPress email &amp; password
+            </div>
+          </div>
+
+          <div style="font-size: 1.5rem; color: #94a3b8; flex-shrink: 0;">&#10140;</div>
+
+          <!-- Step B -->
+          <div style="
+            flex: 1 1 180px;
+            max-width: 220px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+          ">
+            <div style="font-size: 1.5rem; margin-bottom: 0.35rem;">&#127760;</div>
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem;">WordPress verifies</div>
+            <div style="font-size: 0.78rem; color: #555;">
+              Credentials are checked against the real WordPress site
+            </div>
+          </div>
+
+          <div style="font-size: 1.5rem; color: #94a3b8; flex-shrink: 0;">&#10140;</div>
+
+          <!-- Step C -->
+          <div style="
+            flex: 1 1 180px;
+            max-width: 220px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+          ">
+            <div style="font-size: 1.5rem; margin-bottom: 0.35rem;">&#128275;</div>
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem;">Session granted</div>
+            <div style="font-size: 0.78rem; color: #555;">
+              A temporary session lets the member edit their profile on this site
+            </div>
+          </div>
+        </div>
+
+        <p style="
+          text-align: center;
+          margin: 1.25rem 0 0;
+          font-size: 0.82rem;
+          color: #64748b;
+          line-height: 1.5;
+        ">
+          No passwords are stored by the directory. WordPress is the only system
+          that knows member credentials.
+        </p>
+      </div>
+    </section>
+
+    <!-- ── WHAT'S NOT SHARED ── -->
+    <section style="margin-bottom: 2rem;">
+      <h2 style="font-size: 1.25rem; margin-bottom: 1.25rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+        What's never shared publicly
+      </h2>
+
+      <div style="
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem 2rem;
+        max-width: 520px;
+      ">
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+          <span style="color: #dc2626; font-weight: 700;">&#10005;</span> Email addresses
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+          <span style="color: #dc2626; font-weight: 700;">&#10005;</span> Phone numbers
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+          <span style="color: #dc2626; font-weight: 700;">&#10005;</span> Passwords
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+          <span style="color: #dc2626; font-weight: 700;">&#10005;</span> Billing / payment info
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+          <span style="color: #dc2626; font-weight: 700;">&#10005;</span> Non-opted-in members
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+          <span style="color: #dc2626; font-weight: 700;">&#10005;</span> Hidden location / dates
+        </div>
+      </div>
+    </section>
+
+    <footer style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; font-size: 0.82rem; color: #94a3b8;">
+      Built for the Natural Building Alliance board demo — March 2026
+    </footer>
+  </main>
+</Layout>

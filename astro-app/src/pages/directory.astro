@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import MemberLoginForm from '../components/MemberLoginForm.tsx';
 import entriesData from '../../public/data/directoryEntries.json';
 
 type EntryType = 'individual' | 'organization' | 'business';
@@ -13,17 +14,116 @@ interface DirectoryEntry {
   location: string;
   website?: string;
   tags: string[];
+  badges: string[];
+  categories: string[];
+  materials: string[];
+  member_since_year?: number;
+  logo_url?: string;
+  bio?: string;
+  /** Vanity slug from API; else URL uses slugify(name)-id */
+  slug?: string;
 }
 
-const entries = entriesData as DirectoryEntry[];
+function slugifyName(name: string): string {
+  return (
+    (name || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'member'
+  );
+}
 
-// Pre-split entries by type; actual view selection happens on the client
+function businessProfilePath(entry: DirectoryEntry): string {
+  if (entry.slug && String(entry.slug).trim()) {
+    return `/directory/business/${encodeURIComponent(String(entry.slug).trim())}`;
+  }
+  return `/directory/business/${encodeURIComponent(`${slugifyName(entry.name)}-${entry.id}`)}`;
+}
+
+const entries = (entriesData as DirectoryEntry[]).map((e) => ({
+  ...e,
+  badges: e.badges ?? [],
+  tags: e.tags ?? [],
+  categories: e.categories ?? [],
+  materials: e.materials ?? [],
+}));
+
 const memberEntries = entries.filter(
   (e) => e.type === 'individual' || e.type === 'organization'
 );
 const businessEntries = entries.filter((e) => e.type === 'business');
+const allMaterials = Array.from(new Set(entries.flatMap((e) => e.materials || []))).sort((a, b) =>
+  a.localeCompare(b)
+);
 
 const pageTitle = 'Directory';
+
+const apiBaseUrl =
+  typeof import.meta.env.PUBLIC_MEMBERSHIP_API_URL === 'string' && import.meta.env.PUBLIC_MEMBERSHIP_API_URL
+    ? import.meta.env.PUBLIC_MEMBERSHIP_API_URL
+    : import.meta.env.DEV
+      ? 'http://localhost:8000'
+      : '';
+
+const joinMembershipUrl =
+  typeof import.meta.env.PUBLIC_JOIN_MEMBERSHIP_URL === 'string' &&
+  import.meta.env.PUBLIC_JOIN_MEMBERSHIP_URL.trim()
+    ? import.meta.env.PUBLIC_JOIN_MEMBERSHIP_URL.trim()
+    : 'https://natural-building-alliance.org/register/';
+
+const badgeColors: Record<string, { bg: string; fg: string }> = {
+  staff:         { bg: '#6d28d9', fg: '#fff' },
+  board:         { bg: '#0369a1', fg: '#fff' },
+  'former board': { bg: '#94a3b8', fg: '#fff' },
+};
+
+const categoryStyles: Record<string, { bg: string; fg: string; label: string; iconName: string }> = {
+  professional: { bg: '#dbeafe', fg: '#1d4ed8', label: 'Professional', iconName: 'hammer' },
+  'owner/builder': { bg: '#dcfce7', fg: '#166534', label: 'Owner/Builder', iconName: 'house' },
+  vendor: { bg: '#f3e8ff', fg: '#7e22ce', label: 'Vendor', iconName: 'package' },
+  educator: { bg: '#ffedd5', fg: '#c2410c', label: 'Educator', iconName: 'graduation-cap' },
+};
+
+function categoryBadgeStyle(category: string): string {
+  const c = categoryStyles[category] || { bg: '#e5e7eb', fg: '#333' };
+  return `font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: ${c.bg}; color: ${c.fg};`;
+}
+
+function categoryBadgeLabel(category: string): string {
+  const c = categoryStyles[category];
+  return c ? c.label : category;
+}
+
+function categoryBadgeIconName(category: string): string {
+  const c = categoryStyles[category];
+  return c ? c.iconName : 'circle';
+}
+
+function categoryIconSvg(iconName: string): string {
+  if (iconName === 'hammer') {
+    return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 12-8.3 8.3a1 1 0 0 1-1.4 0l-1.2-1.2a1 1 0 0 1 0-1.4L12.4 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.55-1.41-1.41"/><path d="M9 7 4 12"/><path d="m5.5 8.5 5 5"/><path d="m12 4 4 4"/><path d="M4 4h.01"/></svg>';
+  }
+  if (iconName === 'house') {
+    return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .7-1.5l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+  }
+  if (iconName === 'package') {
+    return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+  }
+  if (iconName === 'graduation-cap') {
+    return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.084a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>';
+  }
+  return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>';
+}
+
+function materialChipStyle(): string {
+  return 'font-size: 0.78rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: #fef3c7; color: #7c2d12;';
+}
+
+function badgeStyle(badge: string): string {
+  const c = badgeColors[badge] || { bg: '#e5e7eb', fg: '#333' };
+  return `font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: ${c.bg}; color: ${c.fg}; text-transform: uppercase; letter-spacing: 0.03em;`;
+}
 ---
 
 <Layout title={pageTitle}>
@@ -31,7 +131,7 @@ const pageTitle = 'Directory';
     <header style="margin-bottom: 1.5rem;">
       <h1 style="margin: 0 0 0.5rem 0;">{pageTitle}</h1>
       <p style="margin: 0; color: #555;">
-        This is a prototype directory using sample data. In the future this will be populated from live membership data.
+        Browse the public business directory anytime. The membership directory is for signed-in active members.
       </p>
     </header>
 
@@ -40,73 +140,156 @@ const pageTitle = 'Directory';
       id="directory-view-toggle"
     >
       <a
-        href="/directory?view=members"
-        data-view="members"
-        style="padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid #333; background: #333; color: #fff; text-decoration: none; font-size: 0.9rem;"
-      >
-        Membership Directory
-      </a>
-      <a
         href="/directory?view=businesses"
         data-view="businesses"
-        style="padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid #ccc; background: #fff; color: #333; text-decoration: none; font-size: 0.9rem;"
+        style="padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid #333; background: #333; color: #fff; text-decoration: none; font-size: 0.9rem;"
       >
         Business Directory
       </a>
+      <a
+        href="/directory?view=members"
+        data-view="members"
+        style="padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid #ccc; background: #fff; color: #333; text-decoration: none; font-size: 0.9rem;"
+      >
+        Membership Directory
+      </a>
     </nav>
+
+    <div
+      id="directory-admin-visibility"
+      hidden
+      style="display: none; gap: 0.5rem; margin: -0.5rem 0 1.25rem 0; flex-wrap: wrap; align-items: center;"
+    >
+      <span style="font-size: 0.85rem; color: #666; margin-right: 0.25rem;">Admin view:</span>
+      <button
+        type="button"
+        id="directory-filter-opted-in"
+        data-admin-filter="opted_in"
+        style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid #333; background: #333; color: #fff; font-size: 0.85rem; cursor: pointer;"
+      >
+        Opted in
+      </button>
+      <button
+        type="button"
+        id="directory-filter-all"
+        data-admin-filter="all"
+        style="padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid #ccc; background: #fff; color: #333; font-size: 0.85rem; cursor: pointer;"
+      >
+        All members
+      </button>
+    </div>
+
+    <section id="directory-material-filters" style="margin-bottom: 1.25rem;">
+      <p style="margin: 0 0 0.45rem 0; color: #555; font-size: 0.9rem;">Filter by material</p>
+      <div id="directory-material-filter-chips" style="display: flex; flex-wrap: wrap; gap: 0.45rem;"></div>
+    </section>
+
+    <section
+      id="directory-members-gate"
+      hidden
+      style="display: none; max-width: 480px; margin: 0 auto 2rem auto;"
+    >
+      <div
+        style="padding: 1.5rem; border: 1px solid #e0e0e0; border-radius: 0.75rem; background: #fafafa; margin-bottom: 1.25rem;"
+      >
+        <h2 id="directory-members-gate-title" style="margin: 0 0 0.5rem 0; font-size: 1.2rem;">
+          Members only
+        </h2>
+        <p id="directory-members-gate-message" style="margin: 0; color: #555; line-height: 1.5; font-size: 0.95rem;">
+          Sign in with your NaBA membership account to browse the membership directory, or join to get access.
+        </p>
+        <p style="margin: 1rem 0 0 0;">
+          <a
+            id="directory-members-gate-cta"
+            href={joinMembershipUrl}
+            target="_blank"
+            rel="noreferrer"
+            style="display: inline-block; padding: 0.55rem 1.25rem; border-radius: 999px; background: #166534; color: #fff; text-decoration: none; font-weight: 600; font-size: 0.95rem;"
+          >
+            Join as a member
+          </a>
+        </p>
+      </div>
+      <div id="directory-members-gate-login">
+        <MemberLoginForm client:load redirectTo="/directory?view=members" compact />
+      </div>
+    </section>
 
     <section
       id="directory-members"
       data-section="members"
-      style="display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));"
+      style="display: none; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));"
     >
-      {memberEntries.map((entry) => (
-        <article
-          style="border-radius: 0.75rem; padding: 1.25rem 1.5rem; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);"
-        >
-          <h2 style="margin: 0 0 0.25rem 0; font-size: 1.1rem;">{entry.name}</h2>
-          <p style="margin: 0 0 0.25rem 0; color: #555; font-size: 0.95rem;">
-            {entry.role}
-          </p>
-          <p style="margin: 0 0 0.5rem 0; color: #777; font-size: 0.9rem;">
-            {entry.location}
-          </p>
-          {entry.website && (
-            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">
-              <a href={entry.website} target="_blank" rel="noreferrer" style="color: #0057b8;">
-                Visit website
-              </a>
-            </p>
-          )}
-          <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">
-            {entry.tags.map((tag) => (
-              <span
-                style="font-size: 0.8rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: #f3f3f3; color: #555;"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </article>
-      ))}
+      {/* Membership list is loaded client-side for authorized members only */}
     </section>
 
     <section
       id="directory-businesses"
       data-section="businesses"
-      style="display: none; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));"
+      style="display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));"
     >
       {businessEntries.map((entry) => (
         <article
+          data-materials={entry.materials.map((m) => m.toLowerCase()).join('|')}
           style="border-radius: 0.75rem; padding: 1.25rem 1.5rem; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);"
         >
-          <h2 style="margin: 0 0 0.25rem 0; font-size: 1.1rem;">{entry.name}</h2>
-          <p style="margin: 0 0 0.25rem 0; color: #555; font-size: 0.95rem;">
-            {entry.role}
-          </p>
-          <p style="margin: 0 0 0.5rem 0; color: #777; font-size: 0.9rem;">
-            {entry.location}
-          </p>
+          <div style="display: flex; align-items: flex-start; gap: 1rem;">
+            {entry.logo_url && (
+              <img
+                src={entry.logo_url}
+                alt={`${entry.name} logo`}
+                style="width: 72px; height: 72px; object-fit: contain; border-radius: 0.5rem; border: 1px solid #eee; flex-shrink: 0; background: #fff;"
+              />
+            )}
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
+                <h2 style="margin: 0; font-size: 1.1rem;">
+                  <a
+                    href={businessProfilePath(entry)}
+                    style="color: inherit; text-decoration: none;"
+                  >
+                    {entry.name}
+                  </a>
+                </h2>
+                {entry.badges.map((badge) => (
+                  <span style={badgeStyle(badge)}>{badge}</span>
+                ))}
+              </div>
+              {entry.categories.length > 0 && (
+                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.45rem 0;">
+                  {entry.categories.map((category) => (
+                    <span style={`${categoryBadgeStyle(category)} display: inline-flex; align-items: center; gap: 0.35rem;`}>
+                      <span set:html={categoryIconSvg(categoryBadgeIconName(category))} />
+                      {categoryBadgeLabel(category)}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {entry.org && (
+                <p style="margin: 0 0 0.25rem 0; color: #444; font-size: 0.95rem; font-weight: 500;">
+                  {entry.org}
+                </p>
+              )}
+              <p style="margin: 0 0 0.25rem 0; color: #555; font-size: 0.95rem;">
+                {entry.role}
+              </p>
+              {entry.location && (
+                <p style="margin: 0 0 0.25rem 0; color: #777; font-size: 0.9rem;">
+                  {entry.location}
+                </p>
+              )}
+            </div>
+          </div>
+          {entry.bio && (
+            <p style="margin: 0.75rem 0 0.5rem 0; color: #555; font-size: 0.9rem; line-height: 1.5;">
+              {entry.bio}
+            </p>
+          )}
+          {entry.member_since_year != null && entry.member_since_year > 0 && (
+            <p style="margin: 0 0 0.5rem 0; color: #888; font-size: 0.85rem;">
+              Member since {entry.member_since_year}
+            </p>
+          )}
           {entry.website && (
             <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">
               <a href={entry.website} target="_blank" rel="noreferrer" style="color: #0057b8;">
@@ -114,6 +297,11 @@ const pageTitle = 'Directory';
               </a>
             </p>
           )}
+          <p style="margin: 0.35rem 0 0 0; font-size: 0.9rem;">
+            <a href={businessProfilePath(entry)} style="color: #0057b8; font-weight: 600;">
+              View profile
+            </a>
+          </p>
           <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">
             {entry.tags.map((tag) => (
               <span
@@ -123,31 +311,575 @@ const pageTitle = 'Directory';
               </span>
             ))}
           </div>
+          {entry.materials.length > 0 && (
+            <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">
+              {entry.materials.map((material) => (
+                <span style={materialChipStyle()}>{material}</span>
+              ))}
+            </div>
+          )}
         </article>
       ))}
     </section>
   </main>
 
-  <script>
-    // Client-side toggle so query param and pills stay in sync
+  <script define:vars={{ apiBaseUrl, allMaterials, joinMembershipUrl }}>
     (function () {
       var params = new URLSearchParams(window.location.search);
-      var view = params.get('view') === 'businesses' ? 'businesses' : 'members';
+      var view = params.get('view') === 'members' ? 'members' : 'businesses';
 
       var membersSection = document.querySelector('#directory-members');
       var businessesSection = document.querySelector('#directory-businesses');
+      var membersGate = document.querySelector('#directory-members-gate');
+      var gateMessage = document.querySelector('#directory-members-gate-message');
+      var gateTitle = document.querySelector('#directory-members-gate-title');
+      var gateCta = document.querySelector('#directory-members-gate-cta');
+      var gateLogin = document.querySelector('#directory-members-gate-login');
+      var materialFilters = document.querySelector('#directory-material-filters');
       var pills = document.querySelectorAll('#directory-view-toggle a[data-view]');
+      var filterChipsRoot = document.querySelector('#directory-material-filter-chips');
+      var selectedMaterial = null;
+      var membersLoaded = false;
+
+      var BADGE_COLORS = {
+        staff:         { bg: '#6d28d9', fg: '#fff' },
+        board:         { bg: '#0369a1', fg: '#fff' },
+        'former board': { bg: '#94a3b8', fg: '#fff' },
+      };
+      var CATEGORY_STYLES = {
+        professional: { bg: '#dbeafe', fg: '#1d4ed8', label: 'Professional', iconName: 'hammer' },
+        'owner/builder': { bg: '#dcfce7', fg: '#166534', label: 'Owner/Builder', iconName: 'house' },
+        vendor: { bg: '#f3e8ff', fg: '#7e22ce', label: 'Vendor', iconName: 'package' },
+        educator: { bg: '#ffedd5', fg: '#c2410c', label: 'Educator', iconName: 'graduation-cap' },
+      };
+
+      function escapeHtml(s) {
+        if (s == null || s === '') return '';
+        var div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      function badgeHtml(badge) {
+        var c = BADGE_COLORS[badge] || { bg: '#e5e7eb', fg: '#333' };
+        return '<span style="font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: ' + c.bg + '; color: ' + c.fg + '; text-transform: uppercase; letter-spacing: 0.03em;">' + escapeHtml(badge) + '</span>';
+      }
+
+      function categoryHtml(category) {
+        var c = CATEGORY_STYLES[category] || null;
+        var label = c ? c.label : category;
+        var iconName = c ? c.iconName : 'circle';
+        var bg = c ? c.bg : '#e5e7eb';
+        var fg = c ? c.fg : '#333';
+        return (
+          '<span style="font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: ' +
+          bg +
+          '; color: ' +
+          fg +
+          '; display: inline-flex; align-items: center; gap: 0.35rem;">' +
+          categoryIconSvgHtml(iconName) +
+          escapeHtml(label) +
+          '</span>'
+        );
+      }
+
+      function categoryIconSvgHtml(iconName) {
+        if (iconName === 'hammer') {
+          return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 12-8.3 8.3a1 1 0 0 1-1.4 0l-1.2-1.2a1 1 0 0 1 0-1.4L12.4 9"/><path d="M17.64 15 22 10.64"/><path d="m20.91 11.55-1.41-1.41"/><path d="M9 7 4 12"/><path d="m5.5 8.5 5 5"/><path d="m12 4 4 4"/><path d="M4 4h.01"/></svg>';
+        }
+        if (iconName === 'house') {
+          return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .7-1.5l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+        }
+        if (iconName === 'package') {
+          return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>';
+        }
+        if (iconName === 'graduation-cap') {
+          return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.084a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>';
+        }
+        return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>';
+      }
+
+      function materialChipHtml(material) {
+        return '<span style="font-size: 0.78rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: #fef3c7; color: #7c2d12;">' + escapeHtml(material) + '</span>';
+      }
+
+      function cardMatchesMaterial(article, material) {
+        if (!material) return true;
+        var csv = (article.getAttribute('data-materials') || '').toLowerCase();
+        if (!csv) return false;
+        var parts = csv.split('|').filter(Boolean);
+        return parts.indexOf(material.toLowerCase()) !== -1;
+      }
+
+      function applyMaterialFilter() {
+        var section = view === 'businesses' ? businessesSection : membersSection;
+        if (!section) return;
+        var cards = section.querySelectorAll('article[data-materials]');
+        cards.forEach(function (article) {
+          article.style.display = cardMatchesMaterial(article, selectedMaterial) ? '' : 'none';
+        });
+      }
+
+      function chipStyle(active) {
+        return (
+          'padding: 0.3rem 0.75rem; border-radius: 999px; border: 1px solid ' +
+          (active ? '#7c2d12' : '#d1d5db') +
+          '; background: ' +
+          (active ? '#fef3c7' : '#fff') +
+          '; color: ' +
+          (active ? '#7c2d12' : '#444') +
+          '; font-size: 0.85rem; cursor: pointer;'
+        );
+      }
+
+      function renderMaterialChips(materials) {
+        if (!filterChipsRoot) return;
+        var sorted = (materials || []).slice().sort(function (a, b) { return a.localeCompare(b); });
+        var allBtn = '<button type="button" data-material="" style="' + chipStyle(!selectedMaterial) + '">All</button>';
+        var chips = sorted.map(function (m) {
+          var active = selectedMaterial === m;
+          return '<button type="button" data-material="' + escapeHtml(m) + '" style="' + chipStyle(active) + '">' + escapeHtml(m) + '</button>';
+        }).join('');
+        filterChipsRoot.innerHTML = allBtn + chips;
+        var nodes = filterChipsRoot.querySelectorAll('button[data-material]');
+        nodes.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var next = btn.getAttribute('data-material') || '';
+            selectedMaterial = next || null;
+            renderMaterialChips(sorted);
+            applyMaterialFilter();
+          });
+        });
+      }
+
+      function businessPathFromEntry(entry) {
+        if (entry.slug && String(entry.slug).trim()) {
+          return '/directory/business/' + encodeURIComponent(String(entry.slug).trim());
+        }
+        var s = String(entry.name || '')
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        if (!s) s = 'member';
+        return '/directory/business/' + encodeURIComponent(s + '-' + entry.id);
+      }
+
+      function adminInfoHtml(entry) {
+        if (typeof entry.opted_in === 'undefined' || entry.opted_in === null) return '';
+        var status = entry.membership_status || 'unknown';
+        var isActive = status === 'active';
+        var statusColor = isActive ? '#166534' : '#b91c1c';
+        var statusBg = isActive ? '#f0fdf4' : '#fef2f2';
+        var parts = [];
+        parts.push(
+          '<span style="font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: ' +
+          statusBg + '; color: ' + statusColor + '; text-transform: uppercase;">' +
+          escapeHtml(status) + '</span>'
+        );
+        if (!entry.opted_in) {
+          parts.push(
+            '<span style="font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.55rem; border-radius: 999px; background: #fef3c7; color: #92400e; text-transform: uppercase;">not opted in</span>'
+          );
+        }
+        if (entry.last_active_date && !isActive) {
+          var d = new Date(entry.last_active_date);
+          var now = new Date();
+          var diffMs = now - d;
+          var diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          var agoText = '';
+          if (diffDays < 31) agoText = diffDays + ' days ago';
+          else if (diffDays < 365) agoText = Math.floor(diffDays / 30) + ' months ago';
+          else agoText = Math.floor(diffDays / 365) + '+ years ago';
+          parts.push(
+            '<span style="font-size: 0.75rem; color: #888;">Last active: ' +
+            escapeHtml(entry.last_active_date) + ' (' + escapeHtml(agoText) + ')</span>'
+          );
+        }
+        return '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin-top: 0.5rem;">' + parts.join('') + '</div>';
+      }
+
+      function cardHtml(entry) {
+        var name = escapeHtml(entry.name);
+        var role = escapeHtml(entry.role || '');
+        var location = escapeHtml(entry.location || '');
+        var website = entry.website ? escapeHtml(entry.website) : '';
+        var year = entry.member_since_year;
+        var isBiz = entry.type === 'business';
+        var yearBlock =
+          typeof year === 'number' && year > 0
+            ? '<p style="margin: 0 0 0.5rem 0; color: #888; font-size: 0.85rem;">Member since ' + escapeHtml(String(year)) + '</p>'
+            : '';
+        var adminBlock = adminInfoHtml(entry);
+        var isAdminViewer = false;
+        try {
+          isAdminViewer =
+            localStorage.getItem('naba_member_is_admin') === '1' &&
+            !!localStorage.getItem('naba_member_access_token');
+        } catch (e) {}
+        var editBlock = isAdminViewer
+          ? '<p style="margin: 0.5rem 0 0 0;"><a href="/account/admin/profile?id=' +
+            encodeURIComponent(String(entry.id)) +
+            '" style="color: #0057b8; font-size: 0.9rem; font-weight: 600;">Edit profile</a></p>'
+          : '';
+        var badgesMarkup = (entry.badges || []).map(badgeHtml).join('');
+        var categoriesMarkup = (entry.categories || []).map(categoryHtml).join('');
+        var tagsHtml = (entry.tags || []).map(function (tag) {
+          return '<span style="font-size: 0.8rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: #f3f3f3; color: #555;">' + escapeHtml(tag) + '</span>';
+        }).join('');
+        var materialsHtml = (entry.materials || []).map(materialChipHtml).join('');
+        var websiteBlock = website
+          ? '<p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;"><a href="' + website + '" target="_blank" rel="noreferrer" style="color: #0057b8;">Visit website</a></p>'
+          : '';
+        var orgBlock = entry.org && isBiz
+          ? '<p style="margin: 0 0 0.25rem 0; color: #444; font-size: 0.95rem; font-weight: 500;">' + escapeHtml(entry.org) + '</p>'
+          : '';
+        var bioBlock = entry.bio
+          ? '<p style="margin: 0.75rem 0 0.5rem 0; color: #555; font-size: 0.9rem; line-height: 1.5;">' + escapeHtml(entry.bio) + '</p>'
+          : '';
+        var logoImg = entry.logo_url && isBiz
+          ? '<img src="' + escapeHtml(entry.logo_url) + '" alt="' + name + ' logo" style="width: 72px; height: 72px; object-fit: contain; border-radius: 0.5rem; border: 1px solid #eee; flex-shrink: 0; background: #fff;" />'
+          : '';
+        var locationBlock = location
+          ? '<p style="margin: 0 0 0.25rem 0; color: #777; font-size: 0.9rem;">' + location + '</p>'
+          : '';
+        var profileUrl = entry.type === 'business' ? businessPathFromEntry(entry) : '#';
+        var nameLinked =
+          '<h2 style="margin: 0; font-size: 1.1rem;"><a href="' +
+          profileUrl +
+          '" style="color: inherit; text-decoration: none;">' +
+          name +
+          '</a></h2>';
+        var viewProfileBlock =
+          '<p style="margin: 0.35rem 0 0 0; font-size: 0.9rem;"><a href="' +
+          profileUrl +
+          '" style="color: #0057b8; font-weight: 600;">View profile</a></p>';
+
+        if (isBiz) {
+          var topRow =
+            '<div style="display: flex; align-items: flex-start; gap: 1rem;">' +
+            (logoImg || '') +
+            '<div style="flex: 1; min-width: 0;">' +
+            '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.25rem;">' +
+            nameLinked +
+            badgesMarkup +
+            '</div>' +
+            (categoriesMarkup ? '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.45rem 0;">' + categoriesMarkup + '</div>' : '') +
+            orgBlock +
+            '<p style="margin: 0 0 0.25rem 0; color: #555; font-size: 0.95rem;">' +
+            role +
+            '</p>' +
+            locationBlock +
+            '</div></div>';
+          return (
+            '<article data-materials="' + escapeHtml((entry.materials || []).map(function (m) { return String(m).toLowerCase(); }).join('|')) + '" style="border-radius: 0.75rem; padding: 1.25rem 1.5rem; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">' +
+            topRow +
+            bioBlock +
+            yearBlock +
+            websiteBlock +
+            viewProfileBlock +
+            '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">' +
+            tagsHtml +
+            '</div>' +
+            (materialsHtml ? '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">' + materialsHtml + '</div>' : '') +
+            adminBlock +
+            editBlock +
+            '</article>'
+          );
+        }
+
+        return (
+          '<article data-materials="' + escapeHtml((entry.materials || []).map(function (m) { return String(m).toLowerCase(); }).join('|')) + '" style="border-radius: 0.75rem; padding: 1.25rem 1.5rem; border: 1px solid #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">' +
+          '<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.25rem;">' +
+          '<h2 style="margin: 0; font-size: 1.1rem;">' + name + '</h2>' +
+          badgesMarkup +
+          '</div>' +
+          (categoriesMarkup ? '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.45rem 0;">' + categoriesMarkup + '</div>' : '') +
+          orgBlock +
+          '<p style="margin: 0 0 0.25rem 0; color: #555; font-size: 0.95rem;">' + role + '</p>' +
+          '<p style="margin: 0 0 0.5rem 0; color: #777; font-size: 0.9rem;">' + location + '</p>' +
+          bioBlock + yearBlock + websiteBlock +
+          '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">' + tagsHtml + '</div>' +
+          (materialsHtml ? '<div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem;">' + materialsHtml + '</div>' : '') +
+          adminBlock +
+          editBlock +
+          '</article>'
+        );
+      }
+
+      function mapApiItemToEntry(item) {
+        var entry = {
+          id: item.id,
+          name: item.display_name || '',
+          type: item.entry_type || 'individual',
+          role: item.role || 'Member',
+          org: item.organization || undefined,
+          location: item.location_display || [item.city, item.state_province, item.country].filter(Boolean).join(', ') || '',
+          website: item.website_url ? String(item.website_url) : undefined,
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          badges: Array.isArray(item.badges) ? item.badges : [],
+          categories: Array.isArray(item.categories) ? item.categories : [],
+          materials: Array.isArray(item.materials) ? item.materials : [],
+          logo_url: item.logo_url || undefined,
+          bio: item.bio || undefined,
+          slug: item.slug || undefined,
+          membership_status: item.membership_status || undefined,
+          last_active_date: item.last_active_date || undefined,
+          opted_in: item.opted_in,
+        };
+        if (typeof item.member_since_year === 'number' && item.member_since_year > 0) {
+          entry.member_since_year = item.member_since_year;
+        }
+        return entry;
+      }
+
+      function fetchAllPublicMembers(base, showAll, entryType) {
+        var page = 1;
+        var pageSize = 500;
+        var all = [];
+        var token = null;
+        try {
+          token = localStorage.getItem('naba_member_access_token');
+        } catch (e) {}
+        var useShowAll = Boolean(showAll && token);
+
+        function next() {
+          var url =
+            base +
+            '/api/v1/public/members/?page=' +
+            page +
+            '&page_size=' +
+            pageSize;
+          if (entryType) url += '&entry_type=' + encodeURIComponent(entryType);
+          if (useShowAll) url += '&show_all=true';
+          var fetchOpts = {};
+          if (token) {
+            fetchOpts.headers = { Authorization: 'Bearer ' + token };
+          }
+          return fetch(url, fetchOpts).then(function (res) {
+            if (!res.ok) return null;
+            return res.json();
+          });
+        }
+        function loop() {
+          return next().then(function (data) {
+            if (!data || !Array.isArray(data.items)) return null;
+            var batch = data.items;
+            all = all.concat(batch);
+            var total = typeof data.total === 'number' ? data.total : 0;
+            if (all.length >= total || batch.length < pageSize) {
+              return { items: all };
+            }
+            page += 1;
+            return loop();
+          });
+        }
+        return loop();
+      }
+
+      function isLoggedInAdmin() {
+        try {
+          return (
+            localStorage.getItem('naba_member_is_admin') === '1' &&
+            !!localStorage.getItem('naba_member_access_token')
+          );
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function canAccessMembershipDirectory() {
+        try {
+          var token = localStorage.getItem('naba_member_access_token');
+          if (!token) return false;
+          if (localStorage.getItem('naba_member_is_admin') === '1') return true;
+          return localStorage.getItem('naba_member_membership_status') === 'active';
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function isLoggedIn() {
+        try {
+          return !!localStorage.getItem('naba_member_access_token');
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function getAdminShowAll() {
+        try {
+          return localStorage.getItem('naba_admin_show_all') === '1';
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function setAdminShowAll(showAll) {
+        try {
+          if (showAll) localStorage.setItem('naba_admin_show_all', '1');
+          else localStorage.removeItem('naba_admin_show_all');
+        } catch (e) {}
+      }
+
+      function styleAdminFilterButtons(showAll) {
+        var optedBtn = document.getElementById('directory-filter-opted-in');
+        var allBtn = document.getElementById('directory-filter-all');
+        if (!optedBtn || !allBtn) return;
+        function style(btn, active) {
+          btn.style.borderColor = active ? '#333' : '#ccc';
+          btn.style.background = active ? '#333' : '#fff';
+          btn.style.color = active ? '#fff' : '#333';
+        }
+        style(optedBtn, !showAll);
+        style(allBtn, showAll);
+      }
+
+      function showMembersGate(mode) {
+        if (!membersGate) return;
+        membersGate.hidden = false;
+        membersGate.style.display = 'block';
+        var inactive = mode === 'inactive';
+        if (gateTitle) {
+          gateTitle.textContent = inactive ? 'Membership renewal needed' : 'Members only';
+        }
+        if (gateMessage) {
+          if (inactive) {
+            gateMessage.textContent =
+              'You are signed in, but your membership is not currently active. Renew to browse the membership directory.';
+          } else {
+            gateMessage.textContent =
+              'Sign in with your NaBA membership account to browse the membership directory, or join to get access.';
+          }
+        }
+        if (gateCta) {
+          gateCta.textContent = inactive ? 'Renew your membership' : 'Join as a member';
+          if (joinMembershipUrl) gateCta.setAttribute('href', joinMembershipUrl);
+        }
+        if (gateLogin) {
+          gateLogin.style.display = inactive ? 'none' : 'block';
+        }
+        if (membersSection) {
+          membersSection.style.display = 'none';
+          membersSection.innerHTML = '';
+        }
+        if (materialFilters) materialFilters.style.display = 'none';
+        var adminBar = document.getElementById('directory-admin-visibility');
+        if (adminBar) {
+          adminBar.hidden = true;
+          adminBar.style.display = 'none';
+        }
+      }
+
+      function hideMembersGate() {
+        if (!membersGate) return;
+        membersGate.hidden = true;
+        membersGate.style.display = 'none';
+        if (materialFilters) materialFilters.style.display = '';
+      }
+
+      function renderDirectoryEntries(entries, opts) {
+        opts = opts || {};
+        if (!membersSection || !businessesSection) return;
+        var members = entries.filter(function (e) {
+          return e.type === 'individual' || e.type === 'organization';
+        });
+        var businesses = entries.filter(function (e) {
+          return e.type === 'business';
+        });
+        if (opts.updateMembers) {
+          membersSection.innerHTML = members.map(cardHtml).join('');
+          membersLoaded = true;
+        }
+        if (opts.updateBusinesses !== false) {
+          businessesSection.innerHTML = businesses.map(cardHtml).join('');
+        }
+        var mats = [];
+        entries.forEach(function (e) {
+          (e.materials || []).forEach(function (m) {
+            if (m && mats.indexOf(m) === -1) mats.push(m);
+          });
+        });
+        if (mats.length > 0) {
+          renderMaterialChips(mats);
+        }
+        applyMaterialFilter();
+      }
+
+      function loadBusinessesFromApi() {
+        if (!apiBaseUrl || !businessesSection) return Promise.resolve();
+        return fetchAllPublicMembers(apiBaseUrl, false, 'business')
+          .then(function (data) {
+            if (!data || !Array.isArray(data.items) || data.items.length === 0) return;
+            renderDirectoryEntries(data.items.map(mapApiItemToEntry), {
+              updateMembers: false,
+              updateBusinesses: true,
+            });
+          })
+          .catch(function () {});
+      }
+
+      function loadMembersFromApi(showAll) {
+        if (!apiBaseUrl || !membersSection) return Promise.resolve();
+        return fetchAllPublicMembers(apiBaseUrl, showAll, null)
+          .then(function (data) {
+            if (!data || !Array.isArray(data.items)) return;
+            renderDirectoryEntries(data.items.map(mapApiItemToEntry), {
+              updateMembers: true,
+              updateBusinesses: true,
+            });
+          })
+          .catch(function () {});
+      }
+
+      function setupAdminVisibilityFilter() {
+        var bar = document.getElementById('directory-admin-visibility');
+        var optedBtn = document.getElementById('directory-filter-opted-in');
+        var allBtn = document.getElementById('directory-filter-all');
+        if (!bar || !optedBtn || !allBtn || !isLoggedInAdmin()) return;
+
+        bar.hidden = false;
+        bar.style.display = 'flex';
+        var showAll = getAdminShowAll();
+        styleAdminFilterButtons(showAll);
+
+        function onToggle(nextShowAll) {
+          setAdminShowAll(nextShowAll);
+          styleAdminFilterButtons(nextShowAll);
+          loadMembersFromApi(nextShowAll);
+        }
+        optedBtn.addEventListener('click', function () {
+          onToggle(false);
+        });
+        allBtn.addEventListener('click', function () {
+          onToggle(true);
+        });
+      }
 
       function applyView(nextView) {
         view = nextView;
 
-        if (membersSection && businessesSection) {
-          if (view === 'members') {
-            membersSection.style.display = 'grid';
-            businessesSection.style.display = 'none';
+        if (nextView === 'members') {
+          if (businessesSection) businessesSection.style.display = 'none';
+          if (canAccessMembershipDirectory()) {
+            hideMembersGate();
+            if (membersSection) membersSection.style.display = 'grid';
+            if (!membersLoaded) {
+              loadMembersFromApi(isLoggedInAdmin() && getAdminShowAll());
+            }
+            setupAdminVisibilityFilter();
           } else {
-            membersSection.style.display = 'none';
-            businessesSection.style.display = 'grid';
+            showMembersGate(isLoggedIn() ? 'inactive' : 'guest');
+          }
+        } else {
+          hideMembersGate();
+          if (membersSection) membersSection.style.display = 'none';
+          if (businessesSection) businessesSection.style.display = 'grid';
+          if (materialFilters) materialFilters.style.display = '';
+          var adminBar = document.getElementById('directory-admin-visibility');
+          if (adminBar) {
+            adminBar.hidden = true;
+            adminBar.style.display = 'none';
           }
         }
 
@@ -162,7 +894,12 @@ const pageTitle = 'Directory';
         var url = new URL(window.location.href);
         url.searchParams.set('view', view);
         window.history.replaceState({}, '', url.toString());
+        applyMaterialFilter();
       }
+
+      renderMaterialChips(Array.isArray(allMaterials) ? allMaterials : []);
+      applyMaterialFilter();
+      loadBusinessesFromApi();
 
       pills.forEach(function (pill) {
         pill.addEventListener('click', function (event) {
@@ -178,4 +915,3 @@ const pageTitle = 'Directory';
     })();
   </script>
 </Layout>
-
